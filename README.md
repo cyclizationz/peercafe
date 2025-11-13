@@ -278,6 +278,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Mulya Sandip Patel] - [mspate22@ncsu.edu]
 - [Himanshu Agarwal] - [hagarwa4@ncsu.edu]
 
+### Project3: Section2 Group1
+
+**Team Members:**
+| Name           | Phone        | Email              |
+|----------------|--------------|--------------------|
+| Robert Kemp    | 252-414-6551 | rckemp2@ncsu.edu   |
+| Matthew Nguyen | 919-267-0396 | mknguye2@ncsu.edu  |
+| Rishi Jeswani  | 984-480-7289 | rjeswan2@ncsu.edu  |
+| Tiehang Zhang  | 919-810-6663 | tzhang33@ncsu.edu  |
+
 ## 📞 Support
 
 If you encounter any issues or have questions:
