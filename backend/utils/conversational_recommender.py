@@ -4,106 +4,92 @@ import sys
 import json
 from pathlib import Path
 from dotenv import load_dotenv
-from openai import OpenAI
+from groq import Groq  
 
-# Ensure the backend package directory is on sys.path so imports work when running directly
+# Ensure backend package directory is on sys.path
 SCRIPT_DIR = Path(__file__).resolve().parent
-# backend/utils -> parent is backend
 BACKEND_DIR = str(SCRIPT_DIR.parent)
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
-from database.supabase_db import create_supabase_client  # noqa: E402
+from database.supabase_db import create_supabase_client
+
 
 class ConversationalRestaurantBot:
     def __init__(self):
-        """Initialize with conversation history"""
+        """Initialize Groq and conversation history"""
         load_dotenv()
         self.supabase = create_supabase_client()
-        self.openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        # Initialize Groq client (FREE)
+        self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+        # Must be a function-calling model
+        self.model = "llama-3.1-8b-instant"
+
+        # Conversation history
         self.conversation_history = [
             {
                 "role": "system",
                 "content": """You are a friendly restaurant recommendation assistant.
-                You have access to a restaurant database. Ask clarifying questions when needed,
-                search the database based on user preferences, and provide personalized 
-                recommendations. Be conversational and helpful."""
+                Ask clarifying questions when needed. You can query a restaurant database
+                using the search_restaurants function. Be conversational and helpful."""
             }
         ]
-    
+
     def search_restaurants(self, **kwargs):
         """Search restaurants in Supabase"""
         query = self.supabase.table("restaurants").select("*")
-        
-        # Track description-based filters for post-processing
         description_filters = []
-        
-        # Apply all filters
+
         for key, value in kwargs.items():
             if not value:
                 continue
-            
-            if key == 'cuisine':
+
+            if key == "cuisine":
                 query = query.ilike("cuisine_type", f"%{value}%")
-            elif key == 'price_range':
+            elif key == "price_range":
                 query = query.eq("price_range", value)
-            elif key == 'location':
+            elif key == "location":
                 query = query.ilike("address", f"%{value}%")
-            elif key == 'vegetarian_friendly':
-                description_filters.append('vegetarian')
-            elif key == 'vegan_friendly':
-                description_filters.append('vegan')
-            elif key == 'gluten_free_options':
-                description_filters.append('gluten-free')
-                description_filters.append('gluten free')
-            elif key == 'outdoor_seating':
-                description_filters.append('outdoor')
-            elif key == 'takes_reservations':
-                description_filters.append('reservation')
-            elif key == 'min_rating':
+            elif key == "vegetarian_friendly":
+                description_filters.append("vegetarian")
+            elif key == "vegan_friendly":
+                description_filters.append("vegan")
+            elif key == "gluten_free_options":
+                description_filters.extend(["gluten-free", "gluten free"])
+            elif key == "outdoor_seating":
+                description_filters.append("outdoor")
+            elif key == "takes_reservations":
+                description_filters.append("reservation")
+            elif key == "min_rating":
                 query = query.gte("rating", value)
-        
-        # Execute query with ordering and limit
-        response = query.order("rating", desc=True).limit(15).execute()  # Get more to filter
-        
-        restaurants = response.data if response.data else []
-        
-        # Post-process: filter by description keywords
-        if description_filters and restaurants:
-            filtered_restaurants = []
-            for restaurant in restaurants:
-                description = (restaurant.get('description') or '').lower()
-                # Check if description contains any of the search keywords
-                if any(keyword.lower() in description for keyword in description_filters):
-                    filtered_restaurants.append(restaurant)
-            restaurants = filtered_restaurants[:5]  # Limit to 5 after filtering
+
+        response = query.order("rating", desc=True).limit(20).execute()
+        restaurants = response.data or []
+
+        # Post-filter by description keywords
+        if description_filters:
+            filtered = []
+            for r in restaurants:
+                desc = (r.get("description") or "").lower()
+                if any(keyword in desc for keyword in description_filters):
+                    filtered.append(r)
+            restaurants = filtered[:5]
         else:
             restaurants = restaurants[:5]
-        
+
         return restaurants
-    
+
     def chat(self, user_message):
-        """
-        Send a message and get a response
-        
-        Args:
-            user_message: User's message
-            
-        Returns:
-            Assistant's response
-        """
-        # Add user message to history
-        self.conversation_history.append({
-            "role": "user",
-            "content": user_message
-        })
-        
-        # Define tools
+        """Main chat method"""
+        self.conversation_history.append({"role": "user", "content": user_message})
+
         tools = [{
             "type": "function",
             "function": {
                 "name": "search_restaurants",
-                "description": "Search restaurant database in Supabase",
+                "description": "Search restaurant database",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -120,73 +106,71 @@ class ConversationalRestaurantBot:
                 }
             }
         }]
-        
-        # Get response from OpenAI
-        response = self.openai.chat.completions.create(
-            model="gpt-4",
+
+        # --- First Groq call ---
+        response = self.client.chat.completions.create(
+            model=self.model,
             messages=self.conversation_history,
             tools=tools,
             tool_choice="auto"
         )
-        
+
         message = response.choices[0].message
-        
-        # Check if function was called
+
+        # --- If Groq triggers function calling ---
         if message.tool_calls:
             tool_call = message.tool_calls[0]
-            function_args = json.loads(tool_call.function.arguments)
-            
-            # Search database
-            restaurants = self.search_restaurants(**function_args)
-            
-            # Add function call and result to history
+            args = json.loads(tool_call.function.arguments)
+
+            restaurants = self.search_restaurants(**args)
+
+            # Add tool result back into conversation
             self.conversation_history.append(message)
             self.conversation_history.append({
                 "role": "tool",
                 "tool_call_id": tool_call.id,
                 "content": json.dumps(restaurants)
             })
-            
-            # Get final response
-            final_response = self.openai.chat.completions.create(
-                model="gpt-4",
+
+            # --- Second Groq call: final answer ---
+            final = self.client.chat.completions.create(
+                model=self.model,
                 messages=self.conversation_history
             )
-            
-            assistant_message = final_response.choices[0].message.content
+
+            assistant_message = final.choices[0].message.content
+
         else:
+            # No tool call — return direct answer
             assistant_message = message.content
-        
-        # Add assistant response to history
+
         self.conversation_history.append({
             "role": "assistant",
             "content": assistant_message
         })
-        
+
         return assistant_message
-    
+
     def reset(self):
         """Reset conversation history"""
-        self.conversation_history = self.conversation_history[:1]  # Keep system message
+        self.conversation_history = self.conversation_history[:1]
 
 
 # Example usage
 if __name__ == "__main__":
     bot = ConversationalRestaurantBot()
-    
-    print("🤖 Restaurant Bot: Hi! I can help you find great restaurants. What are you in the mood for?")
-    print()
-    
-    # Simulated conversation
-    messages = [
-        "I'm looking for dinner tonight",
-        "I love Italian food",
-        "Something downtown with outdoor seating would be perfect",
-        "What's the highest rated one?"
+
+    print("🤖 Bot ready! What kind of food are you craving?\n")
+
+    demo_msgs = [
+        "I'm looking for dinner",
+        "I want Italian food",
+        "Downtown preferably",
+        "Something with outdoor seating",
+        "What's the highest rated option?"
     ]
-    
-    for msg in messages:
-        print(f"👤 You: {msg}")
-        response = bot.chat(msg)
-        print(f"🤖 Bot: {response}")
-        print("\n" + "="*60 + "\n")
+
+    for msg in demo_msgs:
+        print("👤:", msg)
+        print("🤖:", bot.chat(msg))
+        print()

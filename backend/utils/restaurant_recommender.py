@@ -1,26 +1,79 @@
-# restaurant_recommender.py
+# backend/utils/restaurant_recommender.py
 import os
 import sys
 import json
 from pathlib import Path
 from dotenv import load_dotenv
-from openai import OpenAI
 
-# Ensure the backend package directory is on sys.path so imports work when running directly
+# Support both OpenAI and Groq
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+
+try:
+    from groq import Groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
+
+# Ensure the backend package directory is on sys.path
 SCRIPT_DIR = Path(__file__).resolve().parent
-# backend/utils -> parent is backend
 BACKEND_DIR = str(SCRIPT_DIR.parent)
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
 from database.supabase_db import create_supabase_client  # noqa: E402
 
+
 class RestaurantRecommender:
-    def __init__(self):
-        """Initialize Supabase and OpenAI clients"""
+    def __init__(self, use_groq=None):
+        """
+        Initialize Supabase and LLM clients
+        
+        Args:
+            use_groq: Boolean to force Groq (True) or OpenAI (False). 
+                     If None, auto-detects based on available API keys.
+                     Defaults to Groq if both are available (it's free!)
+        """
         load_dotenv()
         self.supabase = create_supabase_client()
-        self.openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        # Determine which LLM provider to use
+        if use_groq is None:
+            # Auto-detect: prefer Groq if available (it's free!)
+            use_groq = bool(os.getenv("GROQ_API_KEY"))
+        
+        if use_groq:
+            if not GROQ_AVAILABLE:
+                raise ImportError(
+                    "Groq library not installed. Run: pip install groq"
+                )
+            if not os.getenv("GROQ_API_KEY"):
+                raise ValueError(
+                    "GROQ_API_KEY not set in environment. "
+                    "Get your free key at https://console.groq.com/"
+                )
+            
+            self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+            self.model = "llama-3.1-8b-instant"  # Reliable, fast, supports function calling
+            self.provider = "groq"
+            print("🚀 Using Groq API (FREE)")
+        else:
+            if not OPENAI_AVAILABLE:
+                raise ImportError(
+                    "OpenAI library not installed. Run: pip install openai"
+                )
+            if not os.getenv("OPENAI_API_KEY"):
+                raise ValueError(
+                    "OPENAI_API_KEY not set in environment"
+                )
+            
+            self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            self.model = "gpt-4o-mini"  # Cheaper OpenAI model
+            self.provider = "openai"
+            print("💰 Using OpenAI API (paid)")
     
     def search_restaurants(self, **kwargs):
         """
@@ -30,12 +83,15 @@ class RestaurantRecommender:
             cuisine: Type of cuisine (e.g., 'Italian', 'Japanese')
             price_range: '$', '$$', '$$$', or '$$$$'
             location: Location or neighborhood (searches in address field)
-            vegetarian_friendly: Boolean - searches in description and menu items
-            vegan_friendly: Boolean - searches in description and menu items
-            gluten_free_options: Boolean - searches in description and menu items
+            vegetarian_friendly: Boolean - searches in description
+            vegan_friendly: Boolean - searches in description
+            gluten_free_options: Boolean - searches in description
             outdoor_seating: Boolean - searches in description
             takes_reservations: Boolean - searches in description
             min_rating: Minimum rating (0-5)
+        
+        Returns:
+            List of restaurant dictionaries matching the criteria
         """
         # Start with base query
         query = self.supabase.table("restaurants").select("*")
@@ -53,40 +109,32 @@ class RestaurantRecommender:
         # Search in description field for dietary preferences and amenities
         description_filters = []
         if kwargs.get('vegetarian_friendly'):
-            description_filters.append(('vegetarian', 'vegetarian_friendly'))
+            description_filters.append('vegetarian')
         if kwargs.get('vegan_friendly'):
-            description_filters.append(('vegan', 'vegan_friendly'))
+            description_filters.append('vegan')
         if kwargs.get('gluten_free_options'):
-            description_filters.append(('gluten-free', 'gluten_free_options'))
-            description_filters.append(('gluten free', 'gluten_free_options'))
+            description_filters.extend(['gluten-free', 'gluten free'])
         if kwargs.get('outdoor_seating'):
-            description_filters.append(('outdoor', 'outdoor_seating'))
+            description_filters.append('outdoor')
         if kwargs.get('takes_reservations'):
-            description_filters.append(('reservation', 'takes_reservations'))
-        
-        # Apply description filters (OR logic - any match)
-        if description_filters:
-            # Use OR logic: restaurant description must contain at least one keyword
-            # Note: Supabase PostgREST doesn't support complex OR directly, so we'll filter after
-            pass  # Will filter in post-processing
+            description_filters.append('reservation')
         
         if kwargs.get('min_rating'):
             query = query.gte("rating", kwargs['min_rating'])
         
         # Execute query with ordering and limit
-        response = query.order("rating", desc=True).limit(20).execute()  # Get more to filter
+        response = query.order("rating", desc=True).limit(20).execute()
         
         restaurants = response.data if response.data else []
         
         # Post-process: filter by description keywords
         if description_filters and restaurants:
             filtered_restaurants = []
-            search_keywords = [keyword for keyword, _ in description_filters]
             
             for restaurant in restaurants:
                 description = (restaurant.get('description') or '').lower()
                 # Check if description contains any of the search keywords
-                if any(keyword.lower() in description for keyword in search_keywords):
+                if any(keyword.lower() in description for keyword in description_filters):
                     filtered_restaurants.append(restaurant)
             
             restaurants = filtered_restaurants[:10]  # Limit to 10 after filtering
@@ -97,7 +145,7 @@ class RestaurantRecommender:
     
     def get_recommendations(self, user_query):
         """
-        Get AI-powered restaurant recommendations
+        Get AI-powered restaurant recommendations with robust error handling
         
         Args:
             user_query: Natural language query from user
@@ -105,7 +153,7 @@ class RestaurantRecommender:
         Returns:
             String with personalized recommendations
         """
-        # Define the function schema for OpenAI
+        # Define the function schema for function calling
         tools = [
             {
                 "type": "function",
@@ -126,7 +174,7 @@ class RestaurantRecommender:
                             },
                             "location": {
                                 "type": "string",
-                                "description": "Location, neighborhood, or area to search in restaurant addresses (e.g., Downtown, Midtown, West End, Raleigh, NC)"
+                                "description": "Location, neighborhood, or area to search in restaurant addresses (e.g., Downtown, Midtown, West End)"
                             },
                             "vegetarian_friendly": {
                                 "type": "boolean",
@@ -160,14 +208,17 @@ class RestaurantRecommender:
             }
         ]
         
-        # Create messages for OpenAI
+        # Create messages for the LLM
         messages = [
             {
                 "role": "system",
                 "content": """You are a helpful restaurant recommendation assistant. 
                 You have access to a restaurant database. When a user asks for restaurant 
                 recommendations, extract their preferences and search the database. 
-                Then provide personalized, detailed recommendations based on the results."""
+                Then provide personalized, detailed recommendations based on the results.
+                
+                Be enthusiastic and helpful. Include specific details like the restaurant 
+                name, cuisine type, price range, and why it matches their preferences."""
             },
             {
                 "role": "user",
@@ -175,47 +226,88 @@ class RestaurantRecommender:
             }
         ]
         
-        # First API call - OpenAI decides if it needs to search
-        response = self.openai.chat.completions.create(
-            model="gpt-4",
-            messages=messages,
-            tools=tools,
-            tool_choice="auto"
-        )
-        
-        message = response.choices[0].message
-        
-        # Check if OpenAI wants to call the search function
-        if message.tool_calls:
-            # Extract the function arguments
-            tool_call = message.tool_calls[0]
-            function_args = json.loads(tool_call.function.arguments)
-            
-            print(f"🔍 Searching database with filters: {function_args}")
-            
-            # Search Supabase using the extracted parameters
-            restaurants = self.search_restaurants(**function_args)
-            
-            print(f"✅ Found {len(restaurants)} restaurants")
-            
-            # Add function call and results to conversation
-            messages.append(message)
-            messages.append({
-                "role": "tool",
-                "tool_call_id": tool_call.id,
-                "content": json.dumps(restaurants, indent=2)
-            })
-            
-            # Get final recommendation from OpenAI
-            final_response = self.openai.chat.completions.create(
-                model="gpt-4",
-                messages=messages
+        try:
+            # First API call - LLM decides if it needs to search
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                tools=tools,
+                tool_choice="auto"
             )
             
-            return final_response.choices[0].message.content
-        else:
-            # No function call needed
-            return message.content
+            message = response.choices[0].message
+            
+            # Check if LLM wants to call the search function
+            if message.tool_calls:
+                # Extract the function arguments
+                tool_call = message.tool_calls[0]
+                
+                try:
+                    function_args = json.loads(tool_call.function.arguments)
+                except json.JSONDecodeError as e:
+                    print(f"⚠️  Invalid JSON in function call: {tool_call.function.arguments}")
+                    print(f"⚠️  Error: {e}")
+                    # Fallback to direct response without tools
+                    return self._fallback_response(messages)
+                
+                print(f"🔍 Searching database with filters: {function_args}")
+                
+                # Search Supabase using the extracted parameters
+                restaurants = self.search_restaurants(**function_args)
+                
+                print(f"✅ Found {len(restaurants)} restaurants")
+                
+                # Add function call and results to conversation
+                messages.append(message)
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": json.dumps(restaurants, indent=2)
+                })
+                
+                # Get final recommendation from LLM
+                final_response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages
+                )
+                
+                return final_response.choices[0].message.content
+            else:
+                # No function call needed - direct response
+                return message.content
+                
+        except Exception as e:
+            # Handle any API errors gracefully
+            error_msg = str(e)
+            
+            if "tool_use_failed" in error_msg or "tool call validation failed" in error_msg:
+                print(f"⚠️  Function calling failed: {error_msg}")
+                # Retry without tools as fallback
+                return self._fallback_response(messages)
+            else:
+                print(f"❌ Unexpected error: {error_msg}")
+                raise
+    
+    def _fallback_response(self, messages):
+        """
+        Fallback to direct response without function calling
+        
+        Args:
+            messages: Conversation messages
+            
+        Returns:
+            String response from LLM without tool use
+        """
+        try:
+            print("🔄 Retrying without function calling...")
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"❌ Fallback also failed: {e}")
+            return "I'm having trouble processing your request right now. Please try rephrasing your query or try again later."
 
 
 # Example usage
