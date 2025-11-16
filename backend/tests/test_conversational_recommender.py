@@ -196,9 +196,19 @@ class TestConversationalBotUnit:
 
     # ------------------- conversation state -------------------
     def test_history_persists(self, bot):
+        # Mock the Groq response to return a string
+        resp = MagicMock()
+        resp.choices[0].message.tool_calls = None
+        resp.choices[0].message.content = "Sure, I can help!"
+        bot.client.chat.completions.create.return_value = resp
+        
         bot.chat("Hi")
+        
+        # Set up for second call
+        resp.choices[0].message.content = "What kind of Italian?"
         bot.chat("Italian")
-        assert len(bot.conversation_history) == 4
+        
+        assert len(bot.conversation_history) == 5  # system + 2 user + 2 assistant
         assert bot.conversation_history[1]["content"] == "Hi"
 
     def test_reset_clears_history(self, bot):
