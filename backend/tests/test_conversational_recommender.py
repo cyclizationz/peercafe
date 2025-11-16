@@ -16,7 +16,9 @@ from dotenv import load_dotenv
 # --------------------------------------------------------------
 # 1. Load .env from project root
 # --------------------------------------------------------------
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# This file lives at backend/tests/test_conversational_recommender.py
+# Project root is therefore three levels up: repo_root/backend/tests -> repo_root
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
 # --------------------------------------------------------------
