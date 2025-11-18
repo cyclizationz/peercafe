@@ -150,7 +150,6 @@ function DashboardContent() {
               border: '2px solid #e2e8f0',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               textAlign: 'center',
-              // opacity: 0.6
               cursor: 'pointer',
               transition: 'transform 0.2s, box-shadow 0.2s',
             }}
@@ -170,6 +169,37 @@ function DashboardContent() {
             </h3>
             <p style={{ margin: '0', color: '#64748b', fontSize: '0.9rem' }}>
               Discover nearby orders and deliver them to earn awesome rewards!
+            </p>
+          </div>
+
+          {/* NEW: Loyalty Points Card */}
+          <div
+            style={{
+              padding: '24px',
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              border: '2px solid #e2e8f0',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              textAlign: 'center',
+              cursor: 'pointer',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+            }}
+            onClick={() => (window.location.href = '/user/loyalty-points')}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+          >
+            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🏆</div>
+            <h3 style={{ margin: '0 0 8px 0', color: '#1976d2' }}>
+              My Loyalty Points
+            </h3>
+            <p style={{ margin: '0', color: '#64748b', fontSize: '0.9rem' }}>
+              Track your earnings and rewards from deliveries
             </p>
           </div>
         </div>
