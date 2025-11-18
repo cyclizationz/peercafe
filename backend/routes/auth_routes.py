@@ -122,3 +122,99 @@ def login_user(login_request: LoginRequestModel, authorization: str = Header(Non
     except Exception as e:
         print("Error:", e)
         return {"message": "Login failed"}
+
+
+@auth_router.get("/{user_id}/loyalty-points")
+async def get_loyalty_points(user_id: str):
+    """Get loyalty points balance for a user"""
+    try:
+        client = get_supabase_client()
+        if client is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Supabase is not configured.",
+            )
+            
+        response = client.from_("users").select("loyalty_points").eq("user_id", user_id).execute()
+        if response.data:
+            return {"user_id": user_id, "loyalty_points": response.data[0].get("loyalty_points", 0)}
+        raise HTTPException(status_code=404, detail="User not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get loyalty points: {str(e)}"
+        )
+        
+@auth_router.get("/{user_id}/loyalty-points/history")
+async def get_loyalty_points_history(
+    user_id: str, 
+    limit: int = 20, 
+    offset: int = 0,
+    supabase=Depends(get_supabase)
+):
+    """Get loyalty points transaction history for a user"""
+    try:
+        client = get_supabase_client()
+        if client is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Supabase is not configured.",
+            )
+            
+        # Get points history with order details if available
+        response = (
+            client.from_("loyalty_points_history")
+            .select("*, orders(order_id, total_amount)")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+        
+        return response.data if response.data else []
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get loyalty points history: {str(e)}"
+        )
+
+
+@auth_router.post("/{user_id}/loyalty-points/history")
+async def add_loyalty_points_transaction(
+    user_id: str,
+    transaction_data: dict,
+    supabase=Depends(get_supabase)
+):
+    """Add a loyalty points transaction (used when points are earned from deliveries)"""
+    try:
+        client = get_supabase_client()
+        if client is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Supabase is not configured.",
+            )
+            
+        # Insert the transaction
+        response = (
+            client.from_("loyalty_points_history")
+            .insert({
+                "user_id": user_id,
+                "order_id": transaction_data.get("order_id"),
+                "points_earned": transaction_data.get("points_earned", 0),
+                "points_balance": transaction_data.get("points_balance", 0),
+                "transaction_type": transaction_data.get("transaction_type", "earned"),
+                "description": transaction_data.get("description", "")
+            })
+            .execute()
+        )
+        
+        return {"message": "Transaction recorded successfully", "data": response.data}
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to record loyalty points transaction: {str(e)}"
+        )
