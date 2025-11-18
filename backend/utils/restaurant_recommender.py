@@ -208,17 +208,28 @@ class RestaurantRecommender:
             }
         ]
         
-        # Create messages for the LLM
+        # Create messages for the LLM with EXTREMELY strict instructions
         messages = [
             {
                 "role": "system",
-                "content": """You are a helpful restaurant recommendation assistant. 
-                You have access to a restaurant database. When a user asks for restaurant 
-                recommendations, extract their preferences and search the database. 
-                Then provide personalized, detailed recommendations based on the results.
-                
-                Be enthusiastic and helpful. Include specific details like the restaurant 
-                name, cuisine type, price range, and why it matches their preferences."""
+                "content": """You are a restaurant database query assistant. Your ONLY job is to report what exists in the database.
+
+🚨 ABSOLUTE RULES - BREAKING THESE IS STRICTLY FORBIDDEN:
+
+1. You MUST ONLY mention restaurants that appear in the search_restaurants results
+2. You are FORBIDDEN from inventing, creating, or mentioning ANY restaurant names not in the results
+3. You MUST use the EXACT name, address, rating, and price from the database - DO NOT modify or embellish
+4. If a detail (like outdoor seating) is not in the database result, DO NOT mention it
+5. You are NOT creative - you are a data reporter
+6. NEVER say things like "try their famous dish" unless that specific dish is in the database
+7. If search returns 0 results, say ONLY: "No restaurants found matching those criteria"
+
+Your response format:
+- List each restaurant with its exact name from the database
+- Include only details that are explicitly in the database results
+- Do not add recommendations, suggestions, or fictional details
+
+Remember: You are a database interface, not a creative writer. Accuracy over helpfulness."""
             },
             {
                 "role": "user",
@@ -256,13 +267,33 @@ class RestaurantRecommender:
                 restaurants = self.search_restaurants(**function_args)
                 
                 print(f"✅ Found {len(restaurants)} restaurants")
+                if restaurants:
+                    print(f"📊 Restaurant names: {[r.get('name') for r in restaurants]}")
+                else:
+                    print("⚠️  No restaurants found in database!")
                 
-                # Add function call and results to conversation
+                # ✅ VALIDATION: Handle empty results - DON'T send to LLM
+                if not restaurants or len(restaurants) == 0:
+                    return "No restaurants found matching those criteria. Try adjusting your filters (different cuisine, location, or price range)."
+                
+                # Create a strict instruction with the results
+                restaurant_names = [r.get('name', 'Unknown') for r in restaurants]
+                
+                # Add function call and results to conversation with VERY explicit instructions
                 messages.append(message)
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tool_call.id,
-                    "content": json.dumps(restaurants, indent=2)
+                    "content": f"""DATABASE SEARCH RESULTS (YOU MUST ONLY USE THESE):
+
+{json.dumps(restaurants, indent=2)}
+
+🚨 CRITICAL REMINDER:
+- ONLY mention these {len(restaurants)} restaurants: {', '.join(restaurant_names)}
+- Use their EXACT names and details as shown above
+- DO NOT invent ANY other restaurants
+- DO NOT add details not in the data above
+- If you mention a restaurant not in this list, you have failed"""
                 })
                 
                 # Get final recommendation from LLM
@@ -271,7 +302,16 @@ class RestaurantRecommender:
                     messages=messages
                 )
                 
-                return final_response.choices[0].message.content
+                llm_response = final_response.choices[0].message.content
+                
+                # 🛡️ SAFETY CHECK: Verify LLM only mentioned real restaurants
+                mentioned_fake = self._check_for_hallucinations(llm_response, restaurant_names)
+                if mentioned_fake:
+                    print(f"⚠️  LLM hallucinated restaurants: {mentioned_fake}")
+                    # Return a safe, factual response instead
+                    return self._create_safe_response(restaurants)
+                
+                return llm_response
             else:
                 # No function call needed - direct response
                 return message.content
@@ -287,6 +327,52 @@ class RestaurantRecommender:
             else:
                 print(f"❌ Unexpected error: {error_msg}")
                 raise
+    
+    def _check_for_hallucinations(self, response_text, valid_names):
+        """
+        Check if LLM mentioned restaurants not in the database
+        
+        Returns list of fake restaurant names found, or empty list if clean
+        """
+        # Common fake restaurant name patterns
+        fake_indicators = [
+            "Golden Lake", "Szechuan House", "Din Tai Fung",
+            "Bella Italia", "Mama Mia", "The Golden Dragon",
+            "Spice Palace", "Tokyo Sushi", "Le Bistro"
+        ]
+        
+        found_fakes = []
+        response_lower = response_text.lower()
+        
+        for fake in fake_indicators:
+            if fake.lower() in response_lower and fake not in valid_names:
+                found_fakes.append(fake)
+        
+        return found_fakes
+    
+    def _create_safe_response(self, restaurants):
+        """
+        Create a factual response directly from database data
+        """
+        if not restaurants:
+            return "No restaurants found matching those criteria."
+        
+        response = "Here are the restaurants from our database:\n\n"
+        
+        for i, r in enumerate(restaurants, 1):
+            name = r.get('name', 'Unknown')
+            cuisine = r.get('cuisine_type', 'N/A')
+            price = r.get('price_range', 'N/A')
+            rating = r.get('rating', 'N/A')
+            address = r.get('address', 'N/A')
+            
+            response += f"{i}. **{name}**\n"
+            response += f"   - Cuisine: {cuisine}\n"
+            response += f"   - Price: {price}\n"
+            response += f"   - Rating: {rating}/5\n"
+            response += f"   - Location: {address}\n\n"
+        
+        return response
     
     def _fallback_response(self, messages):
         """

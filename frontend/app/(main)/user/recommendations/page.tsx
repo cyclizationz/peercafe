@@ -132,16 +132,16 @@ export default function RecommendPage() {
                 }}
               >
                 <Typography variant="body2" color="text.secondary">
-                  • "Recommend Italian food downtown with vegetarian options"
+                  • "Recommend Italian food in Raleigh"
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  • "I want spicy food under $50 for delivery"
+                  • "I want cheap chinese food"
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  • "Best rated Chinese restaurants near me"
+                  • "Expensive American restaurants in Raleigh"
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  • "Family-friendly restaurants with outdoor seating"
+                  • "Find me some expensive seafood"
                 </Typography>
               </Box>
             </CardContent>
@@ -163,7 +163,7 @@ export default function RecommendPage() {
                 fullWidth
                 multiline
                 rows={4}
-                placeholder="Example: Recommend Italian food downtown with vegetarian options..."
+                placeholder="Example: Recommend Italian in Raleigh"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={handleKeyPress}

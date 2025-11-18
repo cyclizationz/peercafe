@@ -270,11 +270,21 @@ class TestConversationalBotIntegration:
     def test_real_multi_turn(self, bot, sample_restaurants):
         print("\nREAL Groq – multi-turn")
         self._mock_search(bot, sample_restaurants)
-        bot.chat("Hi")
-        a1 = bot.chat("vegetarian")
-        a2 = bot.chat("outdoor")
-        assert a1 and a2
-        print(f"Turn1: {a1}\nTurn2: {a2}")
+        
+        # First turn - greeting (shouldn't trigger function call)
+        a0 = bot.chat("Hi, I'm looking for a restaurant")
+        assert a0
+        print(f"Turn0: {a0}")
+        
+        # Second turn - specific request (should trigger function call)
+        a1 = bot.chat("I want vegetarian food")
+        assert a1
+        print(f"Turn1: {a1}")
+        
+        # Third turn - follow-up with more context (not just "outdoor")
+        a2 = bot.chat("Does it have outdoor seating?")
+        assert a2
+        print(f"Turn2: {a2}")
 
 
 # ============================= EDGE CASES =============================

@@ -33,7 +33,25 @@ class ConversationalRestaurantBot:
                 "role": "system",
                 "content": """You are a friendly restaurant recommendation assistant.
                 Ask clarifying questions when needed. You can query a restaurant database
-                using the search_restaurants function. Be conversational and helpful."""
+                using the search_restaurants function. Be conversational and helpful.
+                
+                🚨 CRITICAL RULES - ALWAYS FOLLOW THESE:
+                1. ONLY recommend restaurants that appear in the search results
+                2. NEVER make up restaurant names, addresses, ratings, or any details
+                3. Use EXACT information from the database - do not embellish or invent
+                4. If search returns 0 results, say "I couldn't find any restaurants matching that criteria"
+                5. If search returns results, list them using their EXACT names and details
+                6. Do NOT add information that wasn't in the search results
+                
+                📊 PRICE RANGE VALUES - ONLY USE THESE EXACT VALUES:
+                - "$" = cheap (under $15 per person)
+                - "$$" = moderate ($15-30 per person)
+                - "$$$" = expensive ($30-60 per person)
+                - "$$$$" = very expensive ($60+ per person)
+                NEVER use "$$$$$" or any other variation. Only use the 4 values above.
+                
+                Remember: You are a database assistant, not a creative writer. 
+                Accuracy is more important than being detailed."""
             }
         ]
 
@@ -137,14 +155,26 @@ class ConversationalRestaurantBot:
                 }
             }
         }]
-
-        # --- First Groq call ---
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=self.conversation_history,
-            tools=tools,
-            tool_choice="auto"
-        )
+        try:
+            # --- First Groq call ---
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=self.conversation_history,
+                tools=tools,
+                tool_choice="auto"
+            )
+        except Exception as e:
+            # Handle Groq API errors (like 400 BadRequestError)
+            print(f"❌ Groq API error: {e}")
+            error_msg = (
+                "I'm having trouble understanding that request. "
+                "Could you rephrase it or provide more details?"
+            )
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": error_msg
+            })
+            return error_msg
 
         message = response.choices[0].message
 
@@ -158,25 +188,45 @@ class ConversationalRestaurantBot:
                 raw_args = getattr(tool_call, "function", None).arguments
                 args = json.loads(raw_args)
 
+                # 🔍 DEBUG: Show what we're searching for
+                print(f"🔍 Searching with filters: {args}")
+
                 restaurants = self.search_restaurants(**args)
 
-                # Add tool result back into conversation
-                self.conversation_history.append(message)
-                self.conversation_history.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "content": json.dumps(restaurants)
-                })
+                # 🔍 DEBUG: Show what the database actually returned
+                print(f"✅ Database returned {len(restaurants)} restaurants")
+                if restaurants:
+                    print(f"📊 Restaurant names: {[r.get('name') for r in restaurants]}")
+                else:
+                    print("⚠️  No restaurants found in database!")
 
-                # --- Second Groq call: final answer ---
-                final = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=self.conversation_history
-                )
+                # ✅ VALIDATION: Handle empty results before sending to LLM
+                if not restaurants or len(restaurants) == 0:
+                    assistant_message = (
+                        "I couldn't find any restaurants matching those specific criteria. "
+                        "Would you like to try different filters? For example, a different "
+                        "cuisine type, location, or price range?"
+                    )
+                else:
+                    # Add tool result back into conversation with explicit instruction
+                    self.conversation_history.append(message)
+                    self.conversation_history.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": json.dumps(restaurants) + "\n\n⚠️ REMINDER: Use ONLY these restaurants. Do not invent any others."
+                    })
 
-                assistant_message = final.choices[0].message.content
-            except (json.JSONDecodeError, TypeError, AttributeError):
+                    # --- Second Groq call: final answer ---
+                    final = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=self.conversation_history
+                    )
+
+                    assistant_message = final.choices[0].message.content
+
+            except (json.JSONDecodeError, TypeError, AttributeError) as e:
                 # Malformed tool arguments – graceful fallback
+                print(f"❌ Error parsing tool call: {e}")
                 assistant_message = (
                     "I'm a bit confused by that request. "
                     "Could you try again or phrase it differently?"
@@ -190,7 +240,7 @@ class ConversationalRestaurantBot:
                 assistant_message = content
             elif content is None:
                 # No content provided — use default (will be added to history)
-                assistant_message = "I'm here to help you find restaurants!"
+                assistant_message = "I'm here to help you find restaurants! What are you looking for?"
             else:
                 # MagicMock or other non-string — don't add to history (for test control)
                 assistant_message = content
@@ -226,5 +276,6 @@ if __name__ == "__main__":
 
     for msg in demo_msgs:
         print("👤:", msg)
-        print("🤖:", bot.chat(msg))
+        response = bot.chat(msg)
+        print("🤖:", response)
         print()
