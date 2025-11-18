@@ -237,7 +237,7 @@ export default function ChatPage() {
                     • "Expensive American restaurants in Raleigh"
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    • "Find me some expensive seafood"
+                    • "Find me some expensive seafoods"
                   </Typography>
                 </Box>
               </CardContent>
