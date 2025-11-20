@@ -1,5 +1,5 @@
 import bcrypt
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Header, HTTPException, status, Depends
 
 from database.supabase_db import create_supabase_client
 from models.login_model import LoginRequestModel
@@ -152,7 +152,7 @@ async def get_loyalty_points_history(
     user_id: str, 
     limit: int = 20, 
     offset: int = 0,
-    supabase=Depends(get_supabase)
+    supabase=Depends(get_supabase_client)  # Change get_supabase to get_supabase_client
 ):
     """Get loyalty points transaction history for a user"""
     try:
@@ -186,7 +186,7 @@ async def get_loyalty_points_history(
 async def add_loyalty_points_transaction(
     user_id: str,
     transaction_data: dict,
-    supabase=Depends(get_supabase)
+    supabase=Depends(get_supabase_client)  # Change get_supabase to get_supabase_client
 ):
     """Add a loyalty points transaction (used when points are earned from deliveries)"""
     try:
