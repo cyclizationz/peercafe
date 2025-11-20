@@ -36,6 +36,9 @@ def calculate_loyalty_points(total_amount: float) -> int:
         Integer number of loyalty points earned
     """
     # Disregard decimals by converting to int (floor function)
+    if total_amount <= 0:
+        return 0
+
     dollars = int(total_amount)
     return dollars * 100
 
@@ -1123,7 +1126,6 @@ def update_loyalty_points(supabase, user_id: str, points_earned: int, order_id: 
             
     except Exception as e:
         print(f"Error updating loyalty points: {e}")
-
 
 def _validate_delivery_code_match(code, stored_code):
     """Validate that the provided code matches the stored code."""

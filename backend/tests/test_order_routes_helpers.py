@@ -1,6 +1,7 @@
 import pytest
 
 from routes import order_routes as orr
+from routes.order_routes import calculate_loyalty_points
 
 
 def test_recompute_total_within_tolerance_no_change():
@@ -142,3 +143,32 @@ def test_sanitize_order_record_updates_subtotal_for_malformed_items():
 
     # subtotal should be recomputed from items -> 3.0 (malformed item ignored)
     assert sanitized["subtotal"] == pytest.approx(3.0)
+    
+def test_calculate_loyalty_points_helper():
+    """Test the loyalty points calculation helper function"""
+    # Test various amounts to ensure proper calculation
+    test_cases = [
+        (25.99, 2500),    # $25.99 → 2500 points (decimals truncated)
+        (100.50, 10000),  # $100.50 → 10000 points
+        (0.99, 0),        # $0.99 → 0 points
+        (1.00, 100),      # $1.00 → 100 points
+        (37.05, 3700),    # $37.05 → 3700 points
+        (99.99, 9900),    # $99.99 → 9900 points
+        (100.00, 10000),  # $100.00 → 10000 points
+        (0, 0),           # $0 → 0 points
+        (-10.50, 0),      # Negative amount → 0 points
+        (123.45, 12300),  # $123.45 → 12300 points
+    ]
+    
+    for total_amount, expected_points in test_cases:
+        assert calculate_loyalty_points(total_amount) == expected_points, \
+            f"Failed for amount: {total_amount}"
+
+
+def test_calculate_loyalty_points_type_handling():
+    """Test loyalty points calculation with different input types"""
+    # Should handle float inputs
+    assert calculate_loyalty_points(25.99) == 2500
+    
+    # Should handle integer inputs
+    assert calculate_loyalty_points(25) == 2500
