@@ -76,7 +76,7 @@ export default function LoyaltyPointsPage() {
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           <h2 style={{ color: '#2563eb', marginBottom: '20px' }}>Points History</h2>
-          
+
           {loading ? (
             <div style={{ textAlign: 'center', padding: '40px' }}>
               <div>Loading history...</div>
@@ -106,8 +106,8 @@ export default function LoyaltyPointsPage() {
                       <td style={{ padding: '12px' }}>
                         {transaction.description || 'Points earned from delivery'}
                       </td>
-                      <td style={{ 
-                        padding: '12px', 
+                      <td style={{
+                        padding: '12px',
                         textAlign: 'right',
                         color: transaction.points_earned > 0 ? '#16a34a' : '#dc2626',
                         fontWeight: 'bold'
