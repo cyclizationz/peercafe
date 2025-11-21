@@ -8,6 +8,7 @@ from routes.menu_routes import menu_router
 from routes.order_routes import router as order_router
 from routes.restaurant_routes import restaurant_router
 from routes.ai_routes import ai_router
+from routes.inventory_routes import inventory_router
 
 # Initializing the FastAPI app
 app = FastAPI()
@@ -31,6 +32,7 @@ app.include_router(menu_router, prefix="/api")
 app.include_router(order_router, prefix="/api/orders")
 app.include_router(delivery_router, prefix="/api")
 app.include_router(ai_router, prefix="/api/ai")
+app.include_router(inventory_router, prefix="/api/ai")
 
 
 # Basic root endpoint
