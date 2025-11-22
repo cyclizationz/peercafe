@@ -21,6 +21,7 @@ import {
   AutoAwesome as AutoAwesomeIcon,
 } from '@mui/icons-material';
 import Navbar from '../../../_components/navbar';
+import MarkdownContent from '../../../_components/MarkdownContent';
 
 // Temporary: hardcode the API base URL for testing
 const API_BASE = 'http://localhost:8000/api';
@@ -229,16 +230,7 @@ export default function RecommendPage() {
                     Your Personalized Recommendation
                   </Typography>
                 </Box>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    lineHeight: 1.8,
-                    color: 'text.primary',
-                  }}
-                >
-                  {result}
-                </Typography>
+                <MarkdownContent content={result} />
                 <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #e0e0e0' }}>
                   <Button
                     variant="outlined"

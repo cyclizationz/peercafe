@@ -17,7 +17,6 @@ sample_row = {
     "image": None,
     "price": 10.0,
     "quantity": 5,
-    "stock_quantity": 5,
     "reorder_threshold": 10,
     "reorder_quantity": 20,
     "lead_time_days": 3,
@@ -32,15 +31,19 @@ sample_row = {
 
 @pytest.fixture
 def mock_supabase():
-  with patch("routes.inventory_routes.create_supabase_client") as mock_create:
-      mock_client = MagicMock()
-      mock_table = MagicMock()
-      mock_table.select.return_value = mock_table
-      mock_table.eq.return_value = mock_table
-      mock_table.execute.return_value = MagicMock(data=[sample_row])
-      mock_client.from_.return_value = mock_table
-      mock_create.return_value = mock_client
-      yield mock_client
+    # Ensure the global supabase in the module is reset so our patched
+    # create_supabase_client is used.
+    with patch("routes.inventory_routes.supabase", None), patch(
+        "routes.inventory_routes.create_supabase_client"
+    ) as mock_create:
+        mock_client = MagicMock()
+        mock_table = MagicMock()
+        mock_table.select.return_value = mock_table
+        mock_table.eq.return_value = mock_table
+        mock_table.execute.return_value = MagicMock(data=[sample_row])
+        mock_client.from_.return_value = mock_table
+        mock_create.return_value = mock_client
+        yield mock_client
 
 
 def test_get_inventory_status_success(mock_supabase):
@@ -88,5 +91,46 @@ def test_inventory_promo_suggestions_success(mock_advisor_cls, mock_supabase):
     data = response.json()
     assert data["success"] is True
     assert data["suggestions"] == "Promo text"
+
+
+@patch("routes.inventory_routes.InventoryLLMAdvisor", side_effect=ValueError("Missing key"))
+def test_inventory_analysis_missing_key(mock_advisor_cls, mock_supabase):
+    response = client.post("/api/ai/inventory/analysis", json={})
+    assert response.status_code == 503
+    assert "Missing key" in response.json()["detail"]
+
+
+@patch("routes.inventory_routes.InventoryLLMAdvisor", side_effect=ValueError("Missing key"))
+def test_inventory_refill_missing_key(mock_advisor_cls, mock_supabase):
+    response = client.post("/api/ai/inventory/refill-plan", json={})
+    assert response.status_code == 503
+
+
+@patch("routes.inventory_routes.InventoryLLMAdvisor", side_effect=ValueError("Missing key"))
+def test_inventory_promo_missing_key(mock_advisor_cls, mock_supabase):
+    response = client.post("/api/ai/inventory/promo-suggestions", json={})
+    assert response.status_code == 503
+
+
+def test_inventory_status_filters_by_restaurant_id():
+    with patch("routes.inventory_routes.supabase", None), patch(
+        "routes.inventory_routes.create_supabase_client"
+    ) as mock_create:
+        mock_client = MagicMock()
+        mock_table = MagicMock()
+        mock_table.select.return_value = mock_table
+        mock_table.eq.return_value = mock_table
+        mock_table.execute.return_value = MagicMock(data=[sample_row])
+        mock_client.from_.return_value = mock_table
+        mock_create.return_value = mock_client
+
+        response = client.get("/api/ai/inventory/status?restaurant_id=1")
+        assert response.status_code == 200
+        mock_client.from_.assert_called_with("menu_items")
+        # ensure eq was used with restaurant_id
+        assert any(
+            call[0][0] == "restaurant_id" and call[0][1] == 1
+            for call in mock_table.eq.call_args_list
+        )
 
 

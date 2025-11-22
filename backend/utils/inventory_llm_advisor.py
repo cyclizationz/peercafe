@@ -11,7 +11,6 @@ class InventoryLLMAdvisor:
     """LLM-backed advisor for inventory management decisions."""
 
     def __init__(self):
-        load_dotenv()
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
             raise ValueError(
@@ -27,7 +26,7 @@ class InventoryLLMAdvisor:
         for item in snapshot.items:
             lines.append(
                 f"- {item.item_name} (id={item.item_id}, restaurant_id={item.restaurant_id}): "
-                f"price={item.price}, stock={item.stock_quantity}, "
+                f"price={item.price}, stock={item.quantity}, "
                 f"reorder_threshold={item.reorder_threshold}, "
                 f"reorder_quantity={item.reorder_quantity}, "
                 f"lead_time_days={item.lead_time_days}, "

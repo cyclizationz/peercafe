@@ -23,7 +23,7 @@ const sampleSnapshot = {
       description: 'Tasty',
       is_available: true,
       price: 10,
-      stock_quantity: 5,
+      quantity: 5,
       reorder_threshold: 10,
       reorder_quantity: 20,
       lead_time_days: 3,
@@ -42,7 +42,7 @@ const sampleSnapshot = {
         description: 'Tasty',
         is_available: true,
         price: 10,
-        stock_quantity: 5,
+      quantity: 5,
         reorder_threshold: 10,
         reorder_quantity: 20,
         lead_time_days: 3,
@@ -139,6 +139,19 @@ describe('AdminInventoryPage', () => {
     await waitFor(() =>
       expect(screen.getByText(/Promo text/i)).toBeInTheDocument()
     );
+  });
+
+  it('shows error snackbar when status fetch fails', async () => {
+    (fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ detail: 'Failed' }),
+    });
+
+    render(<AdminInventoryPage />);
+
+    expect(
+      await screen.findByText(/Failed to load inventory/i)
+    ).toBeInTheDocument();
   });
 });
 
