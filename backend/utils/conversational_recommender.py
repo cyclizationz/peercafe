@@ -1,10 +1,11 @@
 # conversational_recommender.py
+import json
 import os
 import sys
-import json
 from pathlib import Path
+
 from dotenv import load_dotenv
-from groq import Groq  
+from groq import Groq
 
 # Ensure backend package directory is on sys.path
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -51,7 +52,7 @@ class ConversationalRestaurantBot:
                 NEVER use "$$$$$" or any other variation. Only use the 4 values above.
                 
                 Remember: You are a database assistant, not a creative writer. 
-                Accuracy is more important than being detailed."""
+                Accuracy is more important than being detailed.""",
             }
         ]
 
@@ -102,7 +103,9 @@ class ConversationalRestaurantBot:
                 if price_range != row.get("price_range"):
                     return False
             if location:
-                addr_blob = f"{row.get('address') or ''} {row.get('description') or ''}".lower()
+                addr_blob = (
+                    f"{row.get('address') or ''} {row.get('description') or ''}".lower()
+                )
                 if location.lower() not in addr_blob:
                     return False
             if min_rating is not None:
@@ -133,35 +136,44 @@ class ConversationalRestaurantBot:
         """Main chat method"""
         self.conversation_history.append({"role": "user", "content": user_message})
 
-        tools = [{
-            "type": "function",
-            "function": {
-                "name": "search_restaurants",
-                "description": "Search restaurant database",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "cuisine": {"type": "string"},
-                        "price_range": {"type": "string", "enum": ["$", "$$", "$$$", "$$$$"]},
-                        "location": {"type": "string"},
-                        "vegetarian_friendly": {"type": "boolean"},
-                        "vegan_friendly": {"type": "boolean"},
-                        "gluten_free_options": {"type": "boolean"},
-                        "outdoor_seating": {"type": "boolean"},
-                        "takes_reservations": {"type": "boolean"},
-                        "min_rating": {"type": "number", "minimum": 0, "maximum": 5}
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_restaurants",
+                    "description": "Search restaurant database",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "cuisine": {"type": "string"},
+                            "price_range": {
+                                "type": "string",
+                                "enum": ["$", "$$", "$$$", "$$$$"],
+                            },
+                            "location": {"type": "string"},
+                            "vegetarian_friendly": {"type": "boolean"},
+                            "vegan_friendly": {"type": "boolean"},
+                            "gluten_free_options": {"type": "boolean"},
+                            "outdoor_seating": {"type": "boolean"},
+                            "takes_reservations": {"type": "boolean"},
+                            "min_rating": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 5,
+                            },
+                        },
+                        "required": [],  # All parameters are optional
                     },
-                    "required": []  # All parameters are optional
-                }
+                },
             }
-        }]
+        ]
         try:
             # --- First Groq call ---
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=self.conversation_history,
                 tools=tools,
-                tool_choice="auto"
+                tool_choice="auto",
             )
         except Exception as e:
             # Handle Groq API errors (like 400 BadRequestError)
@@ -170,10 +182,9 @@ class ConversationalRestaurantBot:
                 "I'm having trouble understanding that request. "
                 "Could you rephrase it or provide more details?"
             )
-            self.conversation_history.append({
-                "role": "assistant",
-                "content": error_msg
-            })
+            self.conversation_history.append(
+                {"role": "assistant", "content": error_msg}
+            )
             return error_msg
 
         message = response.choices[0].message
@@ -196,7 +207,9 @@ class ConversationalRestaurantBot:
                 # 🔍 DEBUG: Show what the database actually returned
                 print(f"✅ Database returned {len(restaurants)} restaurants")
                 if restaurants:
-                    print(f"📊 Restaurant names: {[r.get('name') for r in restaurants]}")
+                    print(
+                        f"📊 Restaurant names: {[r.get('name') for r in restaurants]}"
+                    )
                 else:
                     print("⚠️  No restaurants found in database!")
 
@@ -210,16 +223,18 @@ class ConversationalRestaurantBot:
                 else:
                     # Add tool result back into conversation with explicit instruction
                     self.conversation_history.append(message)
-                    self.conversation_history.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": json.dumps(restaurants) + "\n\n⚠️ REMINDER: Use ONLY these restaurants. Do not invent any others."
-                    })
+                    self.conversation_history.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(restaurants)
+                            + "\n\n⚠️ REMINDER: Use ONLY these restaurants. Do not invent any others.",
+                        }
+                    )
 
                     # --- Second Groq call: final answer ---
                     final = self.client.chat.completions.create(
-                        model=self.model,
-                        messages=self.conversation_history
+                        model=self.model, messages=self.conversation_history
                     )
 
                     assistant_message = final.choices[0].message.content
@@ -240,7 +255,9 @@ class ConversationalRestaurantBot:
                 assistant_message = content
             elif content is None:
                 # No content provided — use default (will be added to history)
-                assistant_message = "I'm here to help you find restaurants! What are you looking for?"
+                assistant_message = (
+                    "I'm here to help you find restaurants! What are you looking for?"
+                )
             else:
                 # MagicMock or other non-string — don't add to history (for test control)
                 assistant_message = content
@@ -248,10 +265,9 @@ class ConversationalRestaurantBot:
         # Only append assistant message if it's a real string
         # This allows tests to control history: provide string to add, MagicMock to skip
         if isinstance(assistant_message, str):
-            self.conversation_history.append({
-                "role": "assistant",
-                "content": assistant_message
-            })
+            self.conversation_history.append(
+                {"role": "assistant", "content": assistant_message}
+            )
 
         return assistant_message
 
@@ -271,7 +287,7 @@ if __name__ == "__main__":
         "I want Italian food",
         "Downtown preferably",
         "Something with outdoor seating",
-        "What's the highest rated option?"
+        "What's the highest rated option?",
     ]
 
     for msg in demo_msgs:

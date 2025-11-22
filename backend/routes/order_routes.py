@@ -24,6 +24,25 @@ router = APIRouter(tags=["orders"])
 MAPBOX_TOKEN = os.environ.get("MAPBOX_TOKEN")
 
 
+def calculate_loyalty_points(total_amount: float) -> int:
+    """
+    Calculate loyalty points based on total order amount.
+    100 points per dollar, disregard decimals.
+
+    Args:
+        total_amount: Total order amount in dollars
+
+    Returns:
+        Integer number of loyalty points earned
+    """
+    # Disregard decimals by converting to int (floor function)
+    if total_amount <= 0:
+        return 0
+
+    dollars = int(total_amount)
+    return dollars * 100
+
+
 def get_supabase():
     """Dependency to get Supabase client"""
     return create_supabase_client()
@@ -1076,6 +1095,55 @@ def _validate_delivery_code_input(payload):
     return code
 
 
+def update_loyalty_points(
+    supabase, user_id: str, points_earned: int, order_id: str = None
+):
+    """Update user's loyalty points in the database and record transaction history"""
+    try:
+        # Get current points
+        response = (
+            supabase.table("users")
+            .select("loyalty_points")
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        if response.data:
+            current_points = response.data[0].get("loyalty_points", 0)
+            new_points = current_points + points_earned
+
+            # Update points in users table
+            supabase.table("users").update({"loyalty_points": new_points}).eq(
+                "user_id", user_id
+            ).execute()
+
+            # Record transaction in history
+            history_data = {
+                "user_id": user_id,
+                "order_id": order_id,
+                "points_earned": points_earned,
+                "points_balance": new_points,
+                "transaction_type": "earned",
+                "description": (
+                    f"Points earned from delivery order {order_id}"
+                    if order_id
+                    else "Points earned from delivery"
+                ),
+            }
+
+            # Insert into loyalty_points_history table
+            supabase.table("loyalty_points_history").insert(history_data).execute()
+
+            print(
+                f"Updated loyalty points for user {user_id}: {current_points} -> {new_points}"
+            )
+        else:
+            print(f"User {user_id} not found")
+
+    except Exception as e:
+        print(f"Error updating loyalty points: {e}")
+
+
 def _validate_delivery_code_match(code, stored_code):
     """Validate that the provided code matches the stored code."""
     if not stored_code:
@@ -1132,6 +1200,23 @@ async def verify_delivery_code(
 
         # Validate status transition
         _validate_delivery_status_transition(order_row.get("status"))
+
+        # LOYALTY POINTS: Award points to DELIVERY PERSON when order is delivered
+        delivery_user_id = order_row.get("delivery_user_id")
+        if delivery_user_id:
+            loyalty_points_earned = calculate_loyalty_points(
+                order_row.get("total_amount", 0)
+            )
+            print(
+                f"Awarding {loyalty_points_earned} loyalty points to delivery person {delivery_user_id} for order {order_id}"
+            )
+            update_loyalty_points(
+                supabase, delivery_user_id, loyalty_points_earned, order_id
+            )  # Added order_id parameter
+        else:
+            print(
+                f"Warning: No delivery user assigned to order {order_id}, no loyalty points awarded"
+            )
 
         # Perform atomic update: mark code used and set delivered
         update_data = {

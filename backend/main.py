@@ -2,12 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database.supabase_db import create_supabase_client
+from routes.ai_routes import ai_router
 from routes.auth_routes import auth_router
 from routes.delivery_routes import delivery_router
 from routes.menu_routes import menu_router
 from routes.order_routes import router as order_router
 from routes.restaurant_routes import restaurant_router
-from routes.ai_routes import ai_router
 
 # Initializing the FastAPI app
 app = FastAPI()

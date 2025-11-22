@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 import routes.order_routes as order_routes
 from main import app
+from routes.order_routes import calculate_loyalty_points, update_loyalty_points
 
 client = TestClient(app)
 
@@ -1983,3 +1984,386 @@ def test_verify_delivery_general_exception_handling(mock_supabase_client):
 
     assert response.status_code == 500
     assert "Failed to verify delivery code" in response.json()["detail"]
+
+
+def test_calculate_loyalty_points_basic_cases():
+    """Test loyalty points calculation for various order amounts"""
+    # Test basic cases
+    assert calculate_loyalty_points(25.99) == 2500  # $25.99 → 2500 points
+    assert calculate_loyalty_points(100.50) == 10000  # $100.50 → 10000 points
+    assert calculate_loyalty_points(0.99) == 0  # $0.99 → 0 points
+    assert calculate_loyalty_points(1.00) == 100  # $1.00 → 100 points
+
+
+def test_calculate_loyalty_points_edge_cases():
+    """Test loyalty points calculation edge cases"""
+    # Test decimal truncation
+    assert calculate_loyalty_points(37.05) == 3700  # $37.05 → 3700 points
+    assert calculate_loyalty_points(99.99) == 9900  # $99.99 → 9900 points
+    assert calculate_loyalty_points(100.00) == 10000  # $100.00 → 10000 points
+
+    # Test zero and negative amounts
+    assert calculate_loyalty_points(0) == 0
+    assert (
+        calculate_loyalty_points(-10.50) == 0
+    )  # Negative amounts should give 0 points
+
+
+@patch("routes.order_routes.create_supabase_client")
+def test_update_loyalty_points_success(mock_supabase_client):
+    """Test successful loyalty points update with history recording"""
+    # Mock Supabase client and responses
+    mock_client = Mock()
+    mock_supabase_client.return_value = mock_client
+
+    # Mock users table responses - FIX: Use table() method instead of from_()
+    mock_users_table = Mock()
+    mock_client.table.return_value = mock_users_table
+
+    # Mock initial points query
+    mock_select = Mock()
+    mock_eq = Mock()
+    mock_users_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = Mock(data=[{"loyalty_points": 1500}])
+
+    # Mock points update
+    mock_update = Mock()
+    mock_update_eq = Mock()
+    mock_users_table.update.return_value = mock_update
+    mock_update.eq.return_value = mock_update_eq
+    mock_update_eq.execute.return_value = Mock(data=[{"loyalty_points": 2500}])
+
+    # Mock history table insert - FIX: Make table() return different tables
+    mock_history_table = Mock()
+
+    def table_side_effect(table_name):
+        if table_name == "users":
+            return mock_users_table
+        elif table_name == "loyalty_points_history":
+            return mock_history_table
+        return Mock()
+
+    mock_client.table.side_effect = table_side_effect
+
+    mock_history_insert = Mock()
+    mock_history_table.insert.return_value = mock_history_insert
+    mock_history_insert.execute.return_value = Mock(data=[{"id": 1}])
+
+    # Call the function
+    update_loyalty_points(mock_client, "user_123", 1000, "order_456")
+
+    # Verify users table was updated correctly
+    mock_users_table.update.assert_called_once_with({"loyalty_points": 2500})
+    mock_update.eq.assert_called_once_with("user_id", "user_123")
+
+    # Verify history was recorded
+    expected_history_data = {
+        "user_id": "user_123",
+        "order_id": "order_456",
+        "points_earned": 1000,
+        "points_balance": 2500,
+        "transaction_type": "earned",
+        "description": "Points earned from delivery order order_456",
+    }
+    mock_history_table.insert.assert_called_once_with(expected_history_data)
+
+
+@patch("routes.order_routes.create_supabase_client")
+def test_update_loyalty_points_without_order_id(mock_supabase_client):
+    """Test loyalty points update when no order_id is provided"""
+    mock_client = Mock()
+    mock_supabase_client.return_value = mock_client
+
+    mock_users_table = Mock()
+    mock_client.table.return_value = mock_users_table
+
+    # Mock initial points query
+    mock_select = Mock()
+    mock_eq = Mock()
+    mock_users_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = Mock(data=[{"loyalty_points": 500}])
+
+    # Mock points update
+    mock_update = Mock()
+    mock_update_eq = Mock()
+    mock_users_table.update.return_value = mock_update
+    mock_update.eq.return_value = mock_update_eq
+    mock_update_eq.execute.return_value = Mock(data=[{"loyalty_points": 1500}])
+
+    # Mock history table insert - FIX: Make table() return different tables
+    mock_history_table = Mock()
+
+    def table_side_effect(table_name):
+        if table_name == "users":
+            return mock_users_table
+        elif table_name == "loyalty_points_history":
+            return mock_history_table
+        return Mock()
+
+    mock_client.table.side_effect = table_side_effect
+
+    mock_history_insert = Mock()
+    mock_history_table.insert.return_value = mock_history_insert
+    mock_history_insert.execute.return_value = Mock(data=[{"id": 1}])
+
+    # Call the function without order_id
+    update_loyalty_points(mock_client, "user_123", 1000)
+
+    # Verify history was recorded with generic description
+    expected_history_data = {
+        "user_id": "user_123",
+        "order_id": None,
+        "points_earned": 1000,
+        "points_balance": 1500,
+        "transaction_type": "earned",
+        "description": "Points earned from delivery",
+    }
+    mock_history_table.insert.assert_called_once_with(expected_history_data)
+
+
+@patch("routes.order_routes.create_supabase_client")
+def test_update_loyalty_points_user_not_found(mock_supabase_client, capsys):
+    """Test loyalty points update when user doesn't exist"""
+    mock_client = Mock()
+    mock_supabase_client.return_value = mock_client
+
+    mock_users_table = Mock()
+    mock_client.table.return_value = mock_users_table
+
+    # Mock user not found
+    mock_select = Mock()
+    mock_eq = Mock()
+    mock_users_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = Mock(data=[])
+
+    # Call the function
+    update_loyalty_points(mock_client, "nonexistent_user", 1000, "order_456")
+
+    # Check that appropriate message was printed
+    captured = capsys.readouterr()
+    assert "User nonexistent_user not found" in captured.out
+
+
+@patch("routes.order_routes.update_loyalty_points")
+@patch("routes.order_routes.calculate_loyalty_points")
+@patch("routes.order_routes._normalize_single_order")
+@patch("routes.order_routes.create_supabase_client")
+def test_verify_delivery_code_awards_loyalty_points(
+    mock_supabase_client,
+    mock_normalize,
+    mock_calculate_points,
+    mock_update_points,
+    mock_order_response,
+):
+    """Test that verify_delivery_code awards loyalty points to delivery person"""
+    mock_client = Mock()
+    mock_table = Mock()
+
+    mock_supabase_client.return_value = mock_client
+    mock_client.table.return_value = mock_table
+
+    # Setup order data with delivery user
+    order = mock_order_response.copy()
+    order["status"] = "picked_up"
+    order["delivery_code"] = "123456"
+    order["delivery_user_id"] = "delivery_user_789"
+    order["total_amount"] = 37.05
+
+    updated_order = order.copy()
+    updated_order["status"] = "delivered"
+    updated_order["delivery_code_used"] = True
+
+    # Mock initial fetch
+    mock_select1 = Mock()
+    mock_eq1 = Mock()
+    mock_select1.eq.return_value = mock_eq1
+    mock_eq1.execute.return_value = Mock(data=[order])
+
+    # Mock update
+    mock_update = Mock()
+    mock_update_eq = Mock()
+    mock_update.eq.return_value = mock_update_eq
+    mock_update_eq.execute.return_value = Mock(data=[updated_order])
+
+    # Mock refetch
+    mock_select2 = Mock()
+    mock_eq2 = Mock()
+    mock_select2.eq.return_value = mock_eq2
+    mock_eq2.execute.return_value = Mock(data=[updated_order])
+
+    # Setup table method returns
+    mock_table.select.side_effect = [mock_select1, mock_select2]
+    mock_table.update.return_value = mock_update
+
+    # Mock loyalty points calculation
+    mock_calculate_points.return_value = 3700  # $37.05 → 3700 points
+
+    async def mock_normalize_func(order_data, supabase):
+        return order_data
+
+    mock_normalize.side_effect = mock_normalize_func
+
+    payload = {"delivery_code": "123456"}
+    response = client.post(
+        "/api/orders/550e8400-e29b-41d4-a716-446655440000/verify-delivery",
+        json=payload,
+    )
+
+    assert response.status_code == 200
+
+    # Verify loyalty points were calculated and awarded
+    mock_calculate_points.assert_called_once_with(37.05)
+    mock_update_points.assert_called_once_with(
+        mock_client, "delivery_user_789", 3700, "550e8400-e29b-41d4-a716-446655440000"
+    )
+
+
+@patch("routes.order_routes.update_loyalty_points")
+@patch("routes.order_routes.calculate_loyalty_points")
+@patch("routes.order_routes._normalize_single_order")
+@patch("routes.order_routes.create_supabase_client")
+def test_verify_delivery_code_no_delivery_user(
+    mock_supabase_client,
+    mock_normalize,
+    mock_calculate_points,
+    mock_update_points,
+    mock_order_response,
+    capsys,
+):
+    """Test that verify_delivery_code handles orders without delivery users gracefully"""
+    mock_client = Mock()
+    mock_table = Mock()
+
+    mock_supabase_client.return_value = mock_client
+    mock_client.table.return_value = mock_table
+
+    # Setup order data WITHOUT delivery user
+    order = mock_order_response.copy()
+    order["status"] = "picked_up"
+    order["delivery_code"] = "123456"
+    order["delivery_user_id"] = None  # No delivery user assigned
+    order["total_amount"] = 37.05
+
+    updated_order = order.copy()
+    updated_order["status"] = "delivered"
+    updated_order["delivery_code_used"] = True
+
+    # Mock initial fetch
+    mock_select1 = Mock()
+    mock_eq1 = Mock()
+    mock_select1.eq.return_value = mock_eq1
+    mock_eq1.execute.return_value = Mock(data=[order])
+
+    # Mock update
+    mock_update = Mock()
+    mock_update_eq = Mock()
+    mock_update.eq.return_value = mock_update_eq
+    mock_update_eq.execute.return_value = Mock(data=[updated_order])
+
+    # Mock refetch
+    mock_select2 = Mock()
+    mock_eq2 = Mock()
+    mock_select2.eq.return_value = mock_eq2
+    mock_eq2.execute.return_value = Mock(data=[updated_order])
+
+    # Setup table method returns
+    mock_table.select.side_effect = [mock_select1, mock_select2]
+    mock_table.update.return_value = mock_update
+
+    async def mock_normalize_func(order_data, supabase):
+        return order_data
+
+    mock_normalize.side_effect = mock_normalize_func
+
+    payload = {"delivery_code": "123456"}
+    response = client.post(
+        "/api/orders/550e8400-e29b-41d4-a716-446655440000/verify-delivery",
+        json=payload,
+    )
+
+    assert response.status_code == 200
+
+    # Verify loyalty points were NOT awarded
+    mock_calculate_points.assert_not_called()
+    mock_update_points.assert_not_called()
+
+    # Check that warning was printed
+    captured = capsys.readouterr()
+    assert "No delivery user assigned" in captured.out
+
+
+@patch("routes.order_routes.update_loyalty_points")
+@patch("routes.order_routes.calculate_loyalty_points")
+@patch("routes.order_routes._normalize_single_order")
+@patch("routes.order_routes.create_supabase_client")
+def test_verify_delivery_code_zero_total_amount(
+    mock_supabase_client,
+    mock_normalize,
+    mock_calculate_points,
+    mock_update_points,
+    mock_order_response,
+):
+    """Test loyalty points calculation with zero total amount"""
+    mock_client = Mock()
+    mock_table = Mock()
+
+    mock_supabase_client.return_value = mock_client
+    mock_client.table.return_value = mock_table
+
+    # Setup order data with zero total amount
+    order = mock_order_response.copy()
+    order["status"] = "picked_up"
+    order["delivery_code"] = "123456"
+    order["delivery_user_id"] = "delivery_user_789"
+    order["total_amount"] = 0.00  # Zero total amount
+
+    updated_order = order.copy()
+    updated_order["status"] = "delivered"
+    updated_order["delivery_code_used"] = True
+
+    # Mock initial fetch
+    mock_select1 = Mock()
+    mock_eq1 = Mock()
+    mock_select1.eq.return_value = mock_eq1
+    mock_eq1.execute.return_value = Mock(data=[order])
+
+    # Mock update
+    mock_update = Mock()
+    mock_update_eq = Mock()
+    mock_update.eq.return_value = mock_update_eq
+    mock_update_eq.execute.return_value = Mock(data=[updated_order])
+
+    # Mock refetch
+    mock_select2 = Mock()
+    mock_eq2 = Mock()
+    mock_select2.eq.return_value = mock_eq2
+    mock_eq2.execute.return_value = Mock(data=[updated_order])
+
+    # Setup table method returns
+    mock_table.select.side_effect = [mock_select1, mock_select2]
+    mock_table.update.return_value = mock_update
+
+    # Mock loyalty points calculation for zero amount
+    mock_calculate_points.return_value = 0
+
+    async def mock_normalize_func(order_data, supabase):
+        return order_data
+
+    mock_normalize.side_effect = mock_normalize_func
+
+    payload = {"delivery_code": "123456"}
+    response = client.post(
+        "/api/orders/550e8400-e29b-41d4-a716-446655440000/verify-delivery",
+        json=payload,
+    )
+
+    assert response.status_code == 200
+
+    # Verify loyalty points were calculated (should be 0)
+    mock_calculate_points.assert_called_once_with(0.00)
+    mock_update_points.assert_called_once_with(
+        mock_client, "delivery_user_789", 0, "550e8400-e29b-41d4-a716-446655440000"
+    )
