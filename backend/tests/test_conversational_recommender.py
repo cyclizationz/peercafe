@@ -3,14 +3,13 @@
 All tests pass – unit (mocked) + integration (real Groq)
 """
 
-import sys
 import json
+import os
+import sys
 from pathlib import Path
-
-import pytest
 from unittest.mock import MagicMock, Mock, patch
 
-import os
+import pytest
 from dotenv import load_dotenv
 
 # --------------------------------------------------------------
@@ -44,6 +43,7 @@ class FakeSupabaseResponse:
 
 # ============================= UNIT TESTS =============================
 
+
 @pytest.mark.unit
 class TestConversationalBotUnit:
     @pytest.fixture
@@ -61,9 +61,13 @@ class TestConversationalBotUnit:
 
     @pytest.fixture
     def bot(self, mock_env, mock_groq, mock_supabase):
-        with patch("utils.conversational_recommender.Groq", return_value=mock_groq), \
-             patch("utils.conversational_recommender.create_supabase_client",
-                   return_value=mock_supabase):
+        with (
+            patch("utils.conversational_recommender.Groq", return_value=mock_groq),
+            patch(
+                "utils.conversational_recommender.create_supabase_client",
+                return_value=mock_supabase,
+            ),
+        ):
             return ConversationalRestaurantBot()
 
     @pytest.fixture
@@ -76,7 +80,7 @@ class TestConversationalBotUnit:
                 "price_range": "$$",
                 "address": "123 Main St, Downtown",
                 "rating": 4.8,
-                "description": "Romantic Italian spot with vegetarian pasta and outdoor seating."
+                "description": "Romantic Italian spot with vegetarian pasta and outdoor seating.",
             },
             {
                 "id": 2,
@@ -85,7 +89,7 @@ class TestConversationalBotUnit:
                 "price_range": "$",
                 "address": "456 Green Ave",
                 "rating": 4.6,
-                "description": "Fully vegetarian, vegan-friendly, outdoor patio."
+                "description": "Fully vegetarian, vegan-friendly, outdoor patio.",
             },
             {
                 "id": 3,
@@ -94,8 +98,8 @@ class TestConversationalBotUnit:
                 "price_range": "$$$",
                 "address": "789 Ocean Blvd",
                 "rating": 4.9,
-                "description": "Premium sushi, no outdoor seating."
-            }
+                "description": "Premium sushi, no outdoor seating.",
+            },
         ]
 
     # ------------------- search_restaurants -------------------
@@ -116,7 +120,7 @@ class TestConversationalBotUnit:
             location="Downtown",
             vegetarian_friendly=True,
             outdoor_seating=True,
-            min_rating=4.5
+            min_rating=4.5,
         )
         assert len(res) == 1
         assert res[0]["name"] == "Bella Italia"
@@ -147,10 +151,9 @@ class TestConversationalBotUnit:
         tool = MagicMock()
         tool.id = "call_1"
         tool.function.name = "search_restaurants"
-        tool.function.arguments = json.dumps({
-            "cuisine": "Italian",
-            "vegetarian_friendly": True
-        })
+        tool.function.arguments = json.dumps(
+            {"cuisine": "Italian", "vegetarian_friendly": True}
+        )
 
         first = MagicMock()
         first.choices[0].message.tool_calls = [tool]
@@ -201,13 +204,13 @@ class TestConversationalBotUnit:
         resp.choices[0].message.tool_calls = None
         resp.choices[0].message.content = "Sure, I can help!"
         bot.client.chat.completions.create.return_value = resp
-        
+
         bot.chat("Hi")
-        
+
         # Set up for second call
         resp.choices[0].message.content = "What kind of Italian?"
         bot.chat("Italian")
-        
+
         assert len(bot.conversation_history) == 5  # system + 2 user + 2 assistant
         assert bot.conversation_history[1]["content"] == "Hi"
 
@@ -219,6 +222,7 @@ class TestConversationalBotUnit:
 
 
 # =========================== INTEGRATION TESTS ===========================
+
 
 @pytest.mark.integration
 class TestConversationalBotIntegration:
@@ -233,15 +237,17 @@ class TestConversationalBotIntegration:
 
     @pytest.fixture
     def sample_restaurants(self):
-        return [{
-            "id": 10,
-            "name": "Green Garden",
-            "cuisine_type": "Vegetarian",
-            "price_range": "$$",
-            "address": "321 Peace St",
-            "rating": 4.7,
-            "description": "100% vegetarian, outdoor"
-        }]
+        return [
+            {
+                "id": 10,
+                "name": "Green Garden",
+                "cuisine_type": "Vegetarian",
+                "price_range": "$$",
+                "address": "321 Peace St",
+                "rating": 4.7,
+                "description": "100% vegetarian, outdoor",
+            }
+        ]
 
     def _mock_search(self, bot, data):
         bot.search_restaurants = Mock(return_value=data)
@@ -270,17 +276,17 @@ class TestConversationalBotIntegration:
     def test_real_multi_turn(self, bot, sample_restaurants):
         print("\nREAL Groq – multi-turn")
         self._mock_search(bot, sample_restaurants)
-        
+
         # First turn - greeting (shouldn't trigger function call)
         a0 = bot.chat("Hi, I'm looking for a restaurant")
         assert a0
         print(f"Turn0: {a0}")
-        
+
         # Second turn - specific request (should trigger function call)
         a1 = bot.chat("I want vegetarian food")
         assert a1
         print(f"Turn1: {a1}")
-        
+
         # Third turn - follow-up with more context (not just "outdoor")
         a2 = bot.chat("Does it have outdoor seating?")
         assert a2
@@ -289,20 +295,32 @@ class TestConversationalBotIntegration:
 
 # ============================= EDGE CASES =============================
 
+
 @pytest.mark.unit
 class TestEdgeCases:
     @pytest.fixture
     def bot(self):
-        with patch("utils.conversational_recommender.Groq"), \
-             patch("utils.conversational_recommender.create_supabase_client"):
+        with (
+            patch("utils.conversational_recommender.Groq"),
+            patch("utils.conversational_recommender.create_supabase_client"),
+        ):
             b = ConversationalRestaurantBot()
             b.supabase = MagicMock()
             return b
 
     def test_search_limits_to_5(self, bot):
-        many = [{"id": i, "name": f"R{i}", "cuisine_type": "Test",
-                 "price_range": "$", "address": "Test", "rating": 4.0,
-                 "description": "test"} for i in range(30)]
+        many = [
+            {
+                "id": i,
+                "name": f"R{i}",
+                "cuisine_type": "Test",
+                "price_range": "$",
+                "address": "Test",
+                "rating": 4.0,
+                "description": "test",
+            }
+            for i in range(30)
+        ]
 
         mock_q = MagicMock()
         mock_q.order.return_value = mock_q
