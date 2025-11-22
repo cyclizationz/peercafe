@@ -22,6 +22,7 @@ import {
   Alert,
 } from '@mui/material';
 import Navbar from '../../../_components/navbar';
+import MarkdownContent from '../../../_components/MarkdownContent';
 import { API_BASE } from '@/utils/api';
 
 interface InventoryItem {
@@ -31,7 +32,7 @@ interface InventoryItem {
   description?: string | null;
   is_available: boolean;
   price: number;
-  stock_quantity: number;
+  quantity: number;
   reorder_threshold: number;
   reorder_quantity: number;
   lead_time_days: number;
@@ -320,9 +321,7 @@ export default function AdminInventoryPage() {
                         <TableCell align="right">
                           ${item.price.toFixed(2)}
                         </TableCell>
-                        <TableCell align="right">
-                          {item.stock_quantity}
-                        </TableCell>
+                        <TableCell align="right">{item.quantity}</TableCell>
                         <TableCell align="right">
                           {item.reorder_threshold}
                         </TableCell>
@@ -454,16 +453,7 @@ export default function AdminInventoryPage() {
                 >
                   Inventory Analysis
                 </Typography>
-                <Typography
-                  component="pre"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    fontFamily: 'inherit',
-                    fontSize: '0.9rem',
-                  }}
-                >
-                  {analysisText}
-                </Typography>
+                <MarkdownContent content={analysisText} />
               </Paper>
             )}
 
@@ -479,16 +469,7 @@ export default function AdminInventoryPage() {
                 >
                   Refill Plan
                 </Typography>
-                <Typography
-                  component="pre"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    fontFamily: 'inherit',
-                    fontSize: '0.9rem',
-                  }}
-                >
-                  {refillPlan}
-                </Typography>
+                <MarkdownContent content={refillPlan} />
               </Paper>
             )}
 
@@ -504,16 +485,7 @@ export default function AdminInventoryPage() {
                 >
                   Promo Suggestions
                 </Typography>
-                <Typography
-                  component="pre"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    fontFamily: 'inherit',
-                    fontSize: '0.9rem',
-                  }}
-                >
-                  {promoSuggestions}
-                </Typography>
+                <MarkdownContent content={promoSuggestions} />
               </Paper>
             )}
 

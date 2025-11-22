@@ -24,7 +24,7 @@ class InventoryItem(BaseModel):
     price: float = Field(..., gt=0, description="Price of the item")
 
     # Inventory-specific fields (mirrors Supabase schema)
-    stock_quantity: int = Field(
+    quantity: int = Field(
         0, ge=0, description="Current on-hand stock quantity for this item"
     )
     reorder_threshold: int = Field(

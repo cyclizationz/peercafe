@@ -29,7 +29,7 @@ def build_inventory_items(rows: Iterable[dict]) -> List[InventoryItem]:
             is_available=row.get("is_available", True),
             image=row.get("image"),
             price=float(row.get("price", 0)),
-            stock_quantity=row.get("stock_quantity", row.get("quantity", 0) or 0),
+            quantity=row.get("quantity", 0) or 0,
             reorder_threshold=row.get("reorder_threshold", 10),
             reorder_quantity=row.get("reorder_quantity", 50),
             lead_time_days=row.get("lead_time_days", 3),
@@ -52,19 +52,19 @@ def analyze_inventory(items: List[InventoryItem]) -> InventorySnapshot:
 
     for item in items:
         # Low stock: stock below threshold
-        if item.stock_quantity < item.reorder_threshold:
-            shortage = item.reorder_threshold - item.stock_quantity
+        if item.quantity < item.reorder_threshold:
+            shortage = item.reorder_threshold - item.quantity
             low_stock.append(LowStockItem(item=item, shortage=shortage))
 
         # Overstock: significantly more stock than needed based on 30 day sales.
-        # Simple heuristic: if stock_quantity > 2 * max(last_sales_30d, reorder_quantity)
+        # Simple heuristic: if quantity > 2 * max(last_sales_30d, reorder_quantity)
         reference_demand = max(item.last_sales_30d, item.reorder_quantity, 1)
-        if item.stock_quantity > 2 * reference_demand:
-            overstock_units = item.stock_quantity - 2 * reference_demand
+        if item.quantity > 2 * reference_demand:
+            overstock_units = item.quantity - 2 * reference_demand
             overstock.append(OverstockItem(item=item, overstock_units=overstock_units))
 
         # Stagnant: very low recent sales relative to stock
-        if item.stock_quantity > 0 and item.last_sales_30d == 0:
+        if item.quantity > 0 and item.last_sales_30d == 0:
             stagnant.append(
                 StagnantItem(
                     item=item,

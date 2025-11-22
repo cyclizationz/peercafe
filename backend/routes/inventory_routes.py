@@ -33,7 +33,7 @@ def _fetch_inventory_rows(restaurant_id: Optional[int] = None) -> list[dict]:
         client.from_("menu_items")
         .select(
             "item_id, restaurant_id, item_name, description, is_available, image, "
-            "price, quantity, stock_quantity, reorder_threshold, reorder_quantity, "
+            "price, quantity, reorder_threshold, reorder_quantity, "
             "lead_time_days, is_promo, promo_note, last_sales_7d, last_sales_30d, "
             "created_at, updated_at"
         )
