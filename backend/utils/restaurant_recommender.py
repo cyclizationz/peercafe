@@ -426,6 +426,92 @@ if __name__ == "__main__":
 # --- Eco-routing helpers ---
 def haversine_meters(lat1, lng1, lat2, lng2):
     """Calculate distance in meters between two lat/lng pairs using Haversine."""
+    from math import radians, sin, cos, sqrt, atan2
+
+    if None in (lat1, lng1, lat2, lng2):
+        return None
+
+    R = 6371000  # Earth radius in meters
+    phi1 = radians(lat1)
+    phi2 = radians(lat2)
+    dphi = radians(lat2 - lat1)
+    dlambda = radians(lng2 - lng1)
+
+    a = sin(dphi / 2.0) ** 2 + cos(phi1) * cos(phi2) * sin(dlambda / 2.0) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return R * c
+
+
+def cluster_orders_by_proximity(orders, rest_threshold_m=1000, cust_threshold_m=2000):
+    """Simple clustering: group orders whose restaurants are within rest_threshold_m
+    AND whose customers are within cust_threshold_m. Returns list of groups (lists of orders).
+    Orders missing coordinates are placed into their own singletons.
+    """
+    from . import restaurant_recommender as _mod  # ensure namespace for _parse_coordinates if needed
+
+    def _parse_coordinates(lat_raw, lng_raw):
+        try:
+            if (
+                lat_raw is not None
+                and lng_raw is not None
+                and lat_raw != ""
+                and lng_raw != ""
+            ):
+                return float(lat_raw), float(lng_raw)
+        except (TypeError, ValueError):
+            pass
+        return None, None
+
+    unvisited = list(orders)
+    groups = []
+
+    while unvisited:
+        base = unvisited.pop(0)
+        base_rest = base.get("restaurant") or base.get("restaurants") or {}
+        base_rest_lat, base_rest_lng = _parse_coordinates(
+            base_rest.get("latitude"), base_rest.get("longitude")
+        )
+        base_cust_lat = base.get("latitude")
+        base_cust_lng = base.get("longitude")
+
+        group = [base]
+        to_remove = []
+        for other in unvisited:
+            other_rest = other.get("restaurant") or other.get("restaurants") or {}
+            other_rest_lat, other_rest_lng = _parse_coordinates(
+                other_rest.get("latitude"), other_rest.get("longitude")
+            )
+
+            other_cust_lat = other.get("latitude")
+            other_cust_lng = other.get("longitude")
+
+            rest_dist = (
+                haversine_meters(base_rest_lat, base_rest_lng, other_rest_lat, other_rest_lng)
+                if base_rest_lat is not None and other_rest_lat is not None
+                else None
+            )
+            cust_dist = (
+                haversine_meters(base_cust_lat, base_cust_lng, other_cust_lat, other_cust_lng)
+                if base_cust_lat is not None and other_cust_lat is not None
+                else None
+            )
+
+            if rest_dist is not None and rest_dist <= rest_threshold_m:
+                if cust_dist is None or cust_dist <= cust_threshold_m:
+                    group.append(other)
+                    to_remove.append(other)
+
+        for r in to_remove:
+            unvisited.remove(r)
+
+        groups.append(group)
+
+    return groups
+
+
+# --- Eco-routing helpers ---
+def haversine_meters(lat1, lng1, lat2, lng2):
+    """Calculate distance in meters between two lat/lng pairs using Haversine."""
     from math import atan2, cos, radians, sin, sqrt
 
     if None in (lat1, lng1, lat2, lng2):
