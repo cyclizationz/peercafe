@@ -1098,50 +1098,72 @@ def _validate_delivery_code_input(payload):
 def update_loyalty_points(
     supabase, user_id: str, points_earned: int, order_id: str = None
 ):
-    """Update user's loyalty points in the database and record transaction history"""
-    try:
-        # Get current points
-        response = (
-            supabase.table("users")
-            .select("loyalty_points")
-            .eq("user_id", user_id)
-            .execute()
+    """Update user's loyalty points in the database and record transaction history
+    
+    Raises:
+        HTTPException: If the user is not found or if there's a database error
+    """
+    # Get current points
+    response = (
+        supabase.table("users")
+        .select("loyalty_points")
+        .eq("user_id", user_id)
+        .execute()
+    )
+
+    if not response.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
         )
 
-        if response.data:
-            current_points = response.data[0].get("loyalty_points", 0)
-            new_points = current_points + points_earned
+    current_points = response.data[0].get("loyalty_points", 0)
+    new_points = current_points + points_earned
 
-            # Update points in users table
-            supabase.table("users").update({"loyalty_points": new_points}).eq(
-                "user_id", user_id
-            ).execute()
+    # Update points in users table
+    update_response = (
+        supabase.table("users")
+        .update({"loyalty_points": new_points})
+        .eq("user_id", user_id)
+        .execute()
+    )
 
-            # Record transaction in history
-            history_data = {
-                "user_id": user_id,
-                "order_id": order_id,
-                "points_earned": points_earned,
-                "points_balance": new_points,
-                "transaction_type": "earned",
-                "description": (
-                    f"Points earned from delivery order {order_id}"
-                    if order_id
-                    else "Points earned from delivery"
-                ),
-            }
+    if not update_response.data:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update loyalty points for user {user_id}",
+        )
 
-            # Insert into loyalty_points_history table
-            supabase.table("loyalty_points_history").insert(history_data).execute()
+    # Record transaction in history
+    history_data = {
+        "user_id": user_id,
+        "order_id": order_id,
+        "points_earned": points_earned,
+        "points_balance": new_points,
+        "transaction_type": "earned",
+        "description": (
+            f"Points earned from delivery order {order_id}"
+            if order_id
+            else "Points earned from delivery"
+        ),
+    }
 
-            print(
-                f"Updated loyalty points for user {user_id}: {current_points} -> {new_points}"
-            )
-        else:
-            print(f"User {user_id} not found")
+    # Insert into loyalty_points_history table
+    history_response = (
+        supabase.table("loyalty_points_history")
+        .insert(history_data)
+        .execute()
+    )
 
-    except Exception as e:
-        print(f"Error updating loyalty points: {e}")
+    if not history_response.data:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to record loyalty points transaction for user {user_id}",
+        )
+
+    print(
+        f"Updated loyalty points for user {user_id}: {current_points} -> {new_points}"
+    )
 
 
 def _validate_delivery_code_match(code, stored_code):

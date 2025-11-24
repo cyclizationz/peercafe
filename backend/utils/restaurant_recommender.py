@@ -426,7 +426,11 @@ if __name__ == "__main__":
 # --- Eco-routing helpers ---
 def haversine_meters(lat1, lng1, lat2, lng2):
     """Calculate distance in meters between two lat/lng pairs using Haversine."""
+<<<<<<< HEAD
     from math import atan2, cos, radians, sin, sqrt
+=======
+    from math import radians, sin, cos, sqrt, atan2
+>>>>>>> 2672439 (Initial Creation and Testing)
 
     if None in (lat1, lng1, lat2, lng2):
         return None
@@ -447,9 +451,13 @@ def cluster_orders_by_proximity(orders, rest_threshold_m=1000, cust_threshold_m=
     AND whose customers are within cust_threshold_m. Returns list of groups (lists of orders).
     Orders missing coordinates are placed into their own singletons.
     """
+<<<<<<< HEAD
     # from . import (
     #     restaurant_recommender as _mod,  # ensure namespace for _parse_coordinates if needed
     # )
+=======
+    from . import restaurant_recommender as _mod  # ensure namespace for _parse_coordinates if needed
+>>>>>>> 2672439 (Initial Creation and Testing)
 
     def _parse_coordinates(lat_raw, lng_raw):
         try:
@@ -488,13 +496,18 @@ def cluster_orders_by_proximity(orders, rest_threshold_m=1000, cust_threshold_m=
             other_cust_lng = other.get("longitude")
 
             rest_dist = (
+<<<<<<< HEAD
                 haversine_meters(
                     base_rest_lat, base_rest_lng, other_rest_lat, other_rest_lng
                 )
+=======
+                haversine_meters(base_rest_lat, base_rest_lng, other_rest_lat, other_rest_lng)
+>>>>>>> 2672439 (Initial Creation and Testing)
                 if base_rest_lat is not None and other_rest_lat is not None
                 else None
             )
             cust_dist = (
+<<<<<<< HEAD
                 haversine_meters(
                     base_cust_lat, base_cust_lng, other_cust_lat, other_cust_lng
                 )
@@ -590,6 +603,9 @@ def cluster_orders_by_proximity(orders, rest_threshold_m=1000, cust_threshold_m=
                 haversine_meters(
                     base_cust_lat, base_cust_lng, other_cust_lat, other_cust_lng
                 )
+=======
+                haversine_meters(base_cust_lat, base_cust_lng, other_cust_lat, other_cust_lng)
+>>>>>>> 2672439 (Initial Creation and Testing)
                 if base_cust_lat is not None and other_cust_lat is not None
                 else None
             )

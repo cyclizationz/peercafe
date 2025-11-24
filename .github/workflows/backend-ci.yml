@@ -35,13 +35,6 @@ jobs:
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}      # make sure secret name matches
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}    # only needed here if your code/tests read it
 
-    env:
-      CI: true
-      PROJECT_URL: ${{ secrets.PROJECT_URL }}
-      API_KEY: ${{ secrets.API_KEY }}
-      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}      # make sure secret name matches
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}    # only needed here if your code/tests read it
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -66,7 +59,7 @@ jobs:
           CI: true
           PROJECT_URL: ${{secrets.PROJECT_URL}}
           API_KEY: ${{secrets.API_KEY}}
-          GROQ_API_KEY: ${{secrets.GROQ__API_KEY}}
+          GROQ_API_KEY: ${{secrets.GROQ_API_KEY}}
         run: |
           New-Item -ItemType Directory -Force -Path ./backend/test-output | Out-Null
           pytest backend --maxfail=1 --disable-warnings --junitxml=./backend/test-output/junit.xml --cov=backend --cov-report=xml:./backend/coverage.xml
