@@ -206,13 +206,9 @@ async def deliveries_eco_option(
         best_group_score = None
         for g in viable_groups:
             # sum distances to distinct restaurant ids
-<<<<<<< HEAD
             rids = set(
                 o.get("restaurant_id") for o in g if o.get("restaurant_id") is not None
             )
-=======
-            rids = set(o.get("restaurant_id") for o in g if o.get("restaurant_id") is not None)
->>>>>>> 2672439 (Initial Creation and Testing)
             s = 0
             for rid in rids:
                 d = distance_by_restaurant.get(rid)
@@ -248,13 +244,9 @@ async def deliveries_eco_option(
 
     except Exception as e:
         print(f"Error computing eco option: {e}")
-<<<<<<< HEAD
         raise HTTPException(
             status_code=500, detail="Failed to compute eco-friendly option"
         )
-=======
-        raise HTTPException(status_code=500, detail="Failed to compute eco-friendly option")
->>>>>>> 2672439 (Initial Creation and Testing)
 
 
 @delivery_router.get("/deliveries/ready", response_model=list)
