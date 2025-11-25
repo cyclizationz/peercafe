@@ -406,6 +406,9 @@ export default function AdminInventoryPage() {
               AI Suggestions
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <Button variant="text" href="/admin/chat">
+                Open AI Chat
+              </Button>
               <Button
                 variant="contained"
                 color="secondary"
@@ -438,6 +441,11 @@ export default function AdminInventoryPage() {
               </Button>
             </Box>
           </Box>
+          <Alert severity="info" sx={{ mb: 3 }}>
+            AI-generated inventory suggestions may be inaccurate or incomplete.
+            Always review them against your own data, policies, and judgment
+            before making financial or operational decisions.
+          </Alert>
           <Divider sx={{ mb: 3 }} />
 
           <Box sx={{ display: 'grid', gap: 2 }}>

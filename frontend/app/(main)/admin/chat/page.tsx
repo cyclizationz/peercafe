@@ -193,6 +193,11 @@ export default function ChatPage() {
             <Typography variant="h6" color="text.secondary">
               Chat with our AI to find the perfect restaurant
             </Typography>
+            <Alert severity="info" sx={{ mt: 2 }}>
+              AI responses may be incorrect or incomplete. Do not treat them as
+              financial, legal, or operational advice; always double-check
+              important decisions.
+            </Alert>
           </Box>
           
           {sessionId && (

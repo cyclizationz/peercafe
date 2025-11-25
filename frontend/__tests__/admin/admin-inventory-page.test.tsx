@@ -75,6 +75,11 @@ describe('AdminInventoryPage', () => {
     expect(
       await screen.findByText(/Inventory Management/i)
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /AI-generated inventory suggestions may be inaccurate or incomplete/i
+      )
+    ).toBeInTheDocument();
   });
 
   it('shows empty state when no items', async () => {
