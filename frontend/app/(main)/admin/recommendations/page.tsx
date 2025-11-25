@@ -109,6 +109,10 @@ export default function RecommendPage() {
               Get personalized restaurant recommendations powered by AI
             </Typography>
           </Box>
+          <Alert severity="info">
+            AI-generated recommendations may be inaccurate or incomplete. Always
+            double-check important decisions against your own data and judgment.
+          </Alert>
         </Paper>
 
         {/* Main Content */}
