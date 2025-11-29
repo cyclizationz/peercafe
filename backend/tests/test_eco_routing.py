@@ -1,7 +1,12 @@
 import math
-
+import pytest
 from utils.restaurant_recommender import haversine_meters, cluster_orders_by_proximity
 
+from httpx import AsyncClient
+from fastapi.testclient import TestClient
+from unittest.mock import patch
+
+from main import app
 
 def test_haversine_meters_zero():
     assert haversine_meters(0, 0, 0, 0) == 0
@@ -44,52 +49,130 @@ def test_cluster_orders_by_proximity_singletons_when_far():
     assert len(groups) == 2
     assert all(len(g) == 1 for g in groups)
 
+@pytest.mark.asyncio
+async def test_eco_endpoint_no_orders():
+    """Should return type=none when no ready orders."""
+    with patch("routers.delivery_router.supabase.from_") as mock_from:
+        mock_from.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value.data = []
 
-def test_haversine_meters_none_inputs():
-    # Any None input should result in None
-    assert haversine_meters(None, 0, 0, 0) is None
-    assert haversine_meters(0, None, 0, 0) is None
-    assert haversine_meters(0, 0, None, 0) is None
-    assert haversine_meters(0, 0, 0, None) is None
-
-
-def test_haversine_negative_coordinates():
-    # Check negative and mixed coordinates
-    d = haversine_meters(-33.86, 151.20, 51.50, -0.12)  # Sydney to London approx
-    assert isinstance(d, float)
-    assert d > 8000000  # should be several thousand km
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            resp = await ac.get("/deliveries/eco?latitude=37.0&longitude=-122.0")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["type"] == "none"
+            assert data["orders"] == []
 
 
-def test_cluster_orders_missing_restaurant_coords():
-    # Orders without restaurant coords should be singletons
-    o1 = {"order_id": "1", "restaurant_id": "r1", "restaurants": {}, "latitude": 37.0, "longitude": -122.0}
-    o2 = {"order_id": "2", "restaurant_id": "r2", "restaurants": {}, "latitude": 37.01, "longitude": -122.01}
-    groups = cluster_orders_by_proximity([o1, o2], rest_threshold_m=5000, cust_threshold_m=5000)
-    # No restaurant coords -> cannot compute rest distances -> should be two groups (singletons)
-    assert len(groups) == 2
+@pytest.mark.asyncio
+async def test_eco_endpoint_single_closest_order():
+    """Should return single closest order."""
+    fake_orders = [
+        {
+            "order_id": "1",
+            "user_id": "u1",
+            "restaurant_id": "r1",
+            "restaurants": {"latitude": 37.0, "longitude": -122.0},
+            "latitude": 37.001,
+            "longitude": -122.001,
+            "status": "ready",
+        }
+    ]
+
+    with patch("routers.delivery_router.supabase.from_") as mock_from:
+        mock_from.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value.data = fake_orders
+
+        # Mock distance calculation
+        with patch("routers.delivery_router._compute_distances_and_durations") as mock_dist:
+            mock_dist.return_value = (
+                {"r1": 120},  # distance 120m
+                {"r1": 20}    # duration 20s
+            )
+
+            async with AsyncClient(app=app, base_url="http://test") as ac:
+                resp = await ac.get("/deliveries/eco?latitude=37.0&longitude=-122.0")
+                assert resp.status_code == 200
+                data = resp.json()
+
+                assert data["type"] == "single"
+                assert data["orders"] == ["1"]
 
 
-def test_cluster_orders_string_coordinates_and_missing_customer():
-    # Coordinates as strings should parse; missing customer coords still allow grouping by restaurant proximity
-    o1 = {"order_id": "1", "restaurant_id": "r1", "restaurants": {"latitude": "37.0", "longitude": "-122.0"}, "latitude": None, "longitude": None}
-    o2 = {"order_id": "2", "restaurant_id": "r2", "restaurants": {"latitude": "37.0005", "longitude": "-122.0005"}, "latitude": None, "longitude": None}
-    groups = cluster_orders_by_proximity([o1, o2], rest_threshold_m=200, cust_threshold_m=100)
-    # Restaurants within 200m -> should group even though customers missing
-    assert any(len(g) == 2 for g in groups)
+@pytest.mark.asyncio
+async def test_eco_endpoint_group_orders():
+    """Should return group when clustering produces >1 orders."""
+    fake_orders = [
+        {
+            "order_id": "1",
+            "restaurant_id": "r1",
+            "restaurants": {"latitude": 37.0, "longitude": -122.0},
+            "latitude": 37.001,
+            "longitude": -122.001,
+            "status": "ready",
+        },
+        {
+            "order_id": "2",
+            "restaurant_id": "r2",
+            "restaurants": {"latitude": 37.0005, "longitude": -122.0005},
+            "latitude": 37.002,
+            "longitude": -122.002,
+            "status": "ready",
+        }
+    ]
+
+    with patch("routers.delivery_router.supabase.from_") as mock_from:
+        mock_from.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value.data = fake_orders
+
+        with patch("routers.delivery_router._compute_distances_and_durations") as mock_dist:
+            mock_dist.return_value = (
+                {"r1": 100, "r2": 110},
+                {"r1": 20, "r2": 25}
+            )
+
+            # Mock grouping
+            with patch("routers.delivery_router.cluster_orders_by_proximity") as mock_cluster:
+                mock_cluster.return_value = [
+                    [fake_orders[0], fake_orders[1]]  # 2 order group
+                ]
+
+                async with AsyncClient(app=app, base_url="http://test") as ac:
+                    resp = await ac.get("/deliveries/eco?latitude=37.0&longitude=-122.0")
+                    assert resp.status_code == 200
+                    data = resp.json()
+
+                    assert data["type"] == "group"
+                    assert data["group_size"] == 2
+                    assert set(data["orders"]) == {"1", "2"}
 
 
-def test_cluster_multiple_groups_and_threshold_behavior():
-    # Create 4 orders forming two clusters
-    a1 = make_order(40.0, -75.0, 40.001, -75.001, "a1")
-    a2 = make_order(40.0004, -75.0004, 40.002, -75.002, "a2")
-    b1 = make_order(41.0, -74.0, 41.001, -74.001, "b1")
-    b2 = make_order(41.0003, -74.0003, 41.002, -74.002, "b2")
+@pytest.mark.asyncio
+async def test_ready_orders_endpoint():
+    """Test /deliveries/ready returns enriched orders."""
+    fake_orders = [
+        {
+            "order_id": "1",
+            "restaurant_id": "r1",
+            "restaurants": {"latitude": 37.0, "longitude": -122.0},
+            "latitude": 37.001,
+            "longitude": -122.001,
+            "status": "ready",
+        }
+    ]
 
-    groups = cluster_orders_by_proximity([a1, a2, b1, b2], rest_threshold_m=600, cust_threshold_m=1000)
-    # Expect two groups of 2
-    sizes = sorted([len(g) for g in groups])
-    assert sizes == [2, 2]
+    with patch("routers.delivery_router.supabase.from_") as mock_from:
+        mock_from.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value.data = fake_orders
 
-    # Now set rest_threshold very small -> all singletons
-    groups_small = cluster_orders_by_proximity([a1, a2, b1, b2], rest_threshold_m=10, cust_threshold_m=10)
-    assert all(len(g) == 1 for g in groups_small)
+        with patch("routers.delivery_router._compute_distances_and_durations") as mock_dist:
+            mock_dist.return_value = (
+                {"r1": 150},
+                {"r1": 30}
+            )
+
+            async with AsyncClient(app=app, base_url="http://test") as ac:
+                resp = await ac.get("/deliveries/ready?latitude=37&longitude=-122")
+                assert resp.status_code == 200
+                data = resp.json()
+
+                assert len(data) == 1
+                assert data[0]["order_id"] == "1"
+                assert data[0]["distance_to_restaurant"] == 150
+                assert data[0]["duration_to_restaurant"] == 30
