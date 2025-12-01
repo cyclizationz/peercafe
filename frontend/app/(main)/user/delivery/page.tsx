@@ -237,6 +237,27 @@ export default function DeliveryPage() {
     }
   };
 
+  const fetchGreenOrders = async (
+    lat: number | undefined,
+    long: number | undefined
+  ) => {
+    try {
+      // API call to fetch green orders from backend
+      axios
+        .get(
+          `${backend_url}/deliveries/green-orders?latitude=${lat}&longitude=${long}`
+        )
+        .then(response => {
+          // Validate that response.data is an array before setting state
+          if (Array.isArray(response.data)) {
+            // Process green orders if needed
+          } 
+        })
+    } catch {
+      // Error fetching green orders
+    }
+  };
+
   const handleAcceptOrder = async (order: Order) => {
     // Check if user is authenticated
     if (!currentUser) {
@@ -751,7 +772,7 @@ export default function DeliveryPage() {
           <Typography variant="body2" color="text.secondary">
             ⏱ ETA:{' '}
             {readyOrders.estimated_delivery_time == undefined ||
-            readyOrders.estimated_delivery_time == null
+              readyOrders.estimated_delivery_time == null
               ? '--'
               : readyOrders.estimated_delivery_time.substring(11, 16)}
           </Typography>
