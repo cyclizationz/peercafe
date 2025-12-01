@@ -1,7 +1,8 @@
 import math
-
+import pytest
 from utils.restaurant_recommender import haversine_meters, cluster_orders_by_proximity
 
+import routes.delivery_routes as delivery_routes
 
 def test_haversine_meters_zero():
     assert haversine_meters(0, 0, 0, 0) == 0
@@ -93,3 +94,190 @@ def test_cluster_multiple_groups_and_threshold_behavior():
     # Now set rest_threshold very small -> all singletons
     groups_small = cluster_orders_by_proximity([a1, a2, b1, b2], rest_threshold_m=10, cust_threshold_m=10)
     assert all(len(g) == 1 for g in groups_small)
+    
+def test_eco_endpoint_no_orders(client, monkeypatch):
+    """Should return type=none when no ready orders."""
+    class MockResult:
+        def __init__(self, data):
+            self.data = data
+
+    class MockSupabaseEmpty:
+        def from_(self, table):
+            return self
+
+        def select(self, *args, **kwargs):
+            return self
+
+        def eq(self, *args, **kwargs):
+            return self
+
+        def is_(self, *args, **kwargs):
+            return self
+
+        def execute(self):
+            return MockResult([])
+
+    monkeypatch.setattr(delivery_routes, "supabase", MockSupabaseEmpty())
+
+    resp = client.get("/api/deliveries/eco", params={"latitude": 37.0, "longitude": -122.0})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["type"] == "none"
+    assert data["orders"] == []
+
+
+def test_eco_endpoint_single_closest_order(client, monkeypatch):
+    """Should return single closest order."""
+    fake_orders = [
+        {
+            "order_id": "1",
+            "user_id": "u1",
+            "restaurant_id": "r1",
+            "restaurants": {"latitude": 37.0, "longitude": -122.0},
+            "latitude": 37.001,
+            "longitude": -122.001,
+            "status": "ready",
+        }
+    ]
+
+    class MockResult:
+        def __init__(self, data):
+            self.data = data
+
+    class MockSupabase:
+        def from_(self, table):
+            return self
+
+        def select(self, *args, **kwargs):
+            return self
+
+        def eq(self, *args, **kwargs):
+            return self
+
+        def is_(self, *args, **kwargs):
+            return self
+
+        def execute(self):
+            return MockResult(fake_orders)
+
+    monkeypatch.setattr(delivery_routes, "supabase", MockSupabase())
+
+    async def fake_compute(src_lng, src_lat, dests):
+        return ({"r1": 120}, {"r1": 20})
+
+    monkeypatch.setattr(delivery_routes, "_compute_distances_and_durations", fake_compute)
+
+    resp = client.get("/api/deliveries/eco", params={"latitude": 37.0, "longitude": -122.0})
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["type"] == "single"
+    assert data["orders"] == ["1"]
+
+
+def test_eco_endpoint_group_orders(client, monkeypatch):
+    """Should return group when clustering produces >1 orders."""
+    fake_orders = [
+        {
+            "order_id": "1",
+            "restaurant_id": "r1",
+            "restaurants": {"latitude": 37.0, "longitude": -122.0},
+            "latitude": 37.001,
+            "longitude": -122.001,
+            "status": "ready",
+        },
+        {
+            "order_id": "2",
+            "restaurant_id": "r2",
+            "restaurants": {"latitude": 37.0005, "longitude": -122.0005},
+            "latitude": 37.002,
+            "longitude": -122.002,
+            "status": "ready",
+        }
+    ]
+
+    class MockResult:
+        def __init__(self, data):
+            self.data = data
+
+    class MockSupabase:
+        def from_(self, table):
+            return self
+
+        def select(self, *args, **kwargs):
+            return self
+
+        def eq(self, *args, **kwargs):
+            return self
+
+        def is_(self, *args, **kwargs):
+            return self
+
+        def execute(self):
+            return MockResult(fake_orders)
+
+    monkeypatch.setattr(delivery_routes, "supabase", MockSupabase())
+
+    async def fake_compute(src_lng, src_lat, dests):
+        return ({"r1": 100, "r2": 110}, {"r1": 20, "r2": 25})
+
+    monkeypatch.setattr(delivery_routes, "_compute_distances_and_durations", fake_compute)
+    monkeypatch.setattr(delivery_routes, "cluster_orders_by_proximity", lambda orders: [fake_orders])
+
+    resp = client.get("/api/deliveries/eco", params={"latitude": 37.0, "longitude": -122.0})
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["type"] == "group"
+    assert data["group_size"] == 2
+    assert set(data["orders"]) == {"1", "2"}
+
+
+def test_ready_orders_endpoint(client, monkeypatch):
+    """Test /deliveries/ready returns enriched orders."""
+    fake_orders = [
+        {
+            "order_id": "1",
+            "restaurant_id": "r1",
+            "restaurants": {"latitude": 37.0, "longitude": -122.0},
+            "latitude": 37.001,
+            "longitude": -122.001,
+            "status": "ready",
+        }
+    ]
+
+    class MockResult:
+        def __init__(self, data):
+            self.data = data
+
+    class MockSupabase:
+        def from_(self, table):
+            return self
+
+        def select(self, *args, **kwargs):
+            return self
+
+        def eq(self, *args, **kwargs):
+            return self
+
+        def is_(self, *args, **kwargs):
+            return self
+
+        def execute(self):
+            return MockResult(fake_orders)
+
+    monkeypatch.setattr(delivery_routes, "supabase", MockSupabase())
+
+    async def fake_compute(src_lng, src_lat, dests):
+        return ({"r1": 150}, {"r1": 30})
+
+    monkeypatch.setattr(delivery_routes, "_compute_distances_and_durations", fake_compute)
+
+    resp = client.get("/api/deliveries/ready", params={"latitude": 37, "longitude": -122})
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert len(data) == 1
+    assert data[0]["order_id"] == "1"
+    assert data[0]["distance_to_restaurant"] == 150
+    assert data[0]["duration_to_restaurant"] == 30
