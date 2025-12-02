@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from database.supabase_db import create_supabase_client
 from models.delivery_model import Location
 from utils.geocode import geocode_address
-from utils.restaurant_recommender import haversine_meters, cluster_orders_by_proximity
+from utils.restaurant_recommender import cluster_orders_by_proximity, haversine_meters
 
 delivery_router = APIRouter()
 supabase = create_supabase_client()
@@ -155,11 +155,10 @@ def _enrich_order_with_distance(order, distance_by_restaurant, duration_by_resta
     return o_enriched
 
 
-
-
-
 @delivery_router.get("/deliveries/eco")
-async def deliveries_eco_option(source: Location = Depends(location_from_query), max_group_size: int = Query(3)):
+async def deliveries_eco_option(
+    source: Location = Depends(location_from_query), max_group_size: int = Query(3)
+):
     """Return an eco-friendly option: either a single closest order or a grouped set of orders
     that are near each other to allow an efficient combined route.
     This uses a simple proximity-based heuristic.
@@ -185,10 +184,14 @@ async def deliveries_eco_option(source: Location = Depends(location_from_query),
         dests = _prepare_destinations(restaurant_ids, restaurant_coords_by_id)
         src_lng, src_lat = float(source.longitude), float(source.latitude)
 
-        distance_by_restaurant, duration_by_restaurant = await _compute_distances_and_durations(src_lng, src_lat, dests)
+        distance_by_restaurant, duration_by_restaurant = (
+            await _compute_distances_and_durations(src_lng, src_lat, dests)
+        )
 
         enriched_orders = [
-            _enrich_order_with_distance(o, distance_by_restaurant, duration_by_restaurant)
+            _enrich_order_with_distance(
+                o, distance_by_restaurant, duration_by_restaurant
+            )
             for o in orders
         ]
 
@@ -203,7 +206,9 @@ async def deliveries_eco_option(source: Location = Depends(location_from_query),
         best_group_score = None
         for g in viable_groups:
             # sum distances to distinct restaurant ids
-            rids = set(o.get("restaurant_id") for o in g if o.get("restaurant_id") is not None)
+            rids = set(
+                o.get("restaurant_id") for o in g if o.get("restaurant_id") is not None
+            )
             s = 0
             for rid in rids:
                 d = distance_by_restaurant.get(rid)
@@ -239,7 +244,9 @@ async def deliveries_eco_option(source: Location = Depends(location_from_query),
 
     except Exception as e:
         print(f"Error computing eco option: {e}")
-        raise HTTPException(status_code=500, detail="Failed to compute eco-friendly option")
+        raise HTTPException(
+            status_code=500, detail="Failed to compute eco-friendly option"
+        )
 
 
 @delivery_router.get("/deliveries/ready", response_model=list)
