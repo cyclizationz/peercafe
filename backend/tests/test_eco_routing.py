@@ -121,7 +121,7 @@ async def test_eco_endpoint_group_orders():
             "latitude": 37.002,
             "longitude": -122.002,
             "status": "ready",
-        }
+        },
     ]
 
     with patch("routers.delivery_router.supabase.from_") as mock_from:
