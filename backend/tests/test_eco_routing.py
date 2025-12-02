@@ -1,8 +1,10 @@
 import math
+
 import pytest
-from utils.restaurant_recommender import haversine_meters, cluster_orders_by_proximity
 
 import routes.delivery_routes as delivery_routes
+from utils.restaurant_recommender import cluster_orders_by_proximity, haversine_meters
+
 
 def test_haversine_meters_zero():
     assert haversine_meters(0, 0, 0, 0) == 0
@@ -31,7 +33,9 @@ def test_cluster_orders_by_proximity_groups():
     o2 = make_order(37.0005, -122.0005, 37.002, -122.002, "2")
     o3 = make_order(38.0, -123.0, 38.0, -123.0, "3")
 
-    groups = cluster_orders_by_proximity([o1, o2, o3], rest_threshold_m=200, cust_threshold_m=500)
+    groups = cluster_orders_by_proximity(
+        [o1, o2, o3], rest_threshold_m=200, cust_threshold_m=500
+    )
     # Expect one group with o1 and o2, and one singleton for o3
     assert any(len(g) == 2 for g in groups)
     assert any(len(g) == 1 for g in groups)
@@ -40,7 +44,9 @@ def test_cluster_orders_by_proximity_groups():
 def test_cluster_orders_by_proximity_singletons_when_far():
     o1 = make_order(0, 0, 0, 0, "1")
     o2 = make_order(10, 10, 10, 10, "2")
-    groups = cluster_orders_by_proximity([o1, o2], rest_threshold_m=1000, cust_threshold_m=1000)
+    groups = cluster_orders_by_proximity(
+        [o1, o2], rest_threshold_m=1000, cust_threshold_m=1000
+    )
     # Very far apart -> two singletons
     assert len(groups) == 2
     assert all(len(g) == 1 for g in groups)
@@ -63,18 +69,46 @@ def test_haversine_negative_coordinates():
 
 def test_cluster_orders_missing_restaurant_coords():
     # Orders without restaurant coords should be singletons
-    o1 = {"order_id": "1", "restaurant_id": "r1", "restaurants": {}, "latitude": 37.0, "longitude": -122.0}
-    o2 = {"order_id": "2", "restaurant_id": "r2", "restaurants": {}, "latitude": 37.01, "longitude": -122.01}
-    groups = cluster_orders_by_proximity([o1, o2], rest_threshold_m=5000, cust_threshold_m=5000)
+    o1 = {
+        "order_id": "1",
+        "restaurant_id": "r1",
+        "restaurants": {},
+        "latitude": 37.0,
+        "longitude": -122.0,
+    }
+    o2 = {
+        "order_id": "2",
+        "restaurant_id": "r2",
+        "restaurants": {},
+        "latitude": 37.01,
+        "longitude": -122.01,
+    }
+    groups = cluster_orders_by_proximity(
+        [o1, o2], rest_threshold_m=5000, cust_threshold_m=5000
+    )
     # No restaurant coords -> cannot compute rest distances -> should be two groups (singletons)
     assert len(groups) == 2
 
 
 def test_cluster_orders_string_coordinates_and_missing_customer():
     # Coordinates as strings should parse; missing customer coords still allow grouping by restaurant proximity
-    o1 = {"order_id": "1", "restaurant_id": "r1", "restaurants": {"latitude": "37.0", "longitude": "-122.0"}, "latitude": None, "longitude": None}
-    o2 = {"order_id": "2", "restaurant_id": "r2", "restaurants": {"latitude": "37.0005", "longitude": "-122.0005"}, "latitude": None, "longitude": None}
-    groups = cluster_orders_by_proximity([o1, o2], rest_threshold_m=200, cust_threshold_m=100)
+    o1 = {
+        "order_id": "1",
+        "restaurant_id": "r1",
+        "restaurants": {"latitude": "37.0", "longitude": "-122.0"},
+        "latitude": None,
+        "longitude": None,
+    }
+    o2 = {
+        "order_id": "2",
+        "restaurant_id": "r2",
+        "restaurants": {"latitude": "37.0005", "longitude": "-122.0005"},
+        "latitude": None,
+        "longitude": None,
+    }
+    groups = cluster_orders_by_proximity(
+        [o1, o2], rest_threshold_m=200, cust_threshold_m=100
+    )
     # Restaurants within 200m -> should group even though customers missing
     assert any(len(g) == 2 for g in groups)
 
@@ -86,17 +120,23 @@ def test_cluster_multiple_groups_and_threshold_behavior():
     b1 = make_order(41.0, -74.0, 41.001, -74.001, "b1")
     b2 = make_order(41.0003, -74.0003, 41.002, -74.002, "b2")
 
-    groups = cluster_orders_by_proximity([a1, a2, b1, b2], rest_threshold_m=600, cust_threshold_m=1000)
+    groups = cluster_orders_by_proximity(
+        [a1, a2, b1, b2], rest_threshold_m=600, cust_threshold_m=1000
+    )
     # Expect two groups of 2
     sizes = sorted([len(g) for g in groups])
     assert sizes == [2, 2]
 
     # Now set rest_threshold very small -> all singletons
-    groups_small = cluster_orders_by_proximity([a1, a2, b1, b2], rest_threshold_m=10, cust_threshold_m=10)
+    groups_small = cluster_orders_by_proximity(
+        [a1, a2, b1, b2], rest_threshold_m=10, cust_threshold_m=10
+    )
     assert all(len(g) == 1 for g in groups_small)
-    
+
+
 def test_eco_endpoint_no_orders(client, monkeypatch):
     """Should return type=none when no ready orders."""
+
     class MockResult:
         def __init__(self, data):
             self.data = data
@@ -119,7 +159,9 @@ def test_eco_endpoint_no_orders(client, monkeypatch):
 
     monkeypatch.setattr(delivery_routes, "supabase", MockSupabaseEmpty())
 
-    resp = client.get("/api/deliveries/eco", params={"latitude": 37.0, "longitude": -122.0})
+    resp = client.get(
+        "/api/deliveries/eco", params={"latitude": 37.0, "longitude": -122.0}
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert data["type"] == "none"
@@ -165,9 +207,13 @@ def test_eco_endpoint_single_closest_order(client, monkeypatch):
     async def fake_compute(src_lng, src_lat, dests):
         return ({"r1": 120}, {"r1": 20})
 
-    monkeypatch.setattr(delivery_routes, "_compute_distances_and_durations", fake_compute)
+    monkeypatch.setattr(
+        delivery_routes, "_compute_distances_and_durations", fake_compute
+    )
 
-    resp = client.get("/api/deliveries/eco", params={"latitude": 37.0, "longitude": -122.0})
+    resp = client.get(
+        "/api/deliveries/eco", params={"latitude": 37.0, "longitude": -122.0}
+    )
     assert resp.status_code == 200
     data = resp.json()
 
@@ -193,7 +239,7 @@ def test_eco_endpoint_group_orders(client, monkeypatch):
             "latitude": 37.002,
             "longitude": -122.002,
             "status": "ready",
-        }
+        },
     ]
 
     class MockResult:
@@ -221,10 +267,16 @@ def test_eco_endpoint_group_orders(client, monkeypatch):
     async def fake_compute(src_lng, src_lat, dests):
         return ({"r1": 100, "r2": 110}, {"r1": 20, "r2": 25})
 
-    monkeypatch.setattr(delivery_routes, "_compute_distances_and_durations", fake_compute)
-    monkeypatch.setattr(delivery_routes, "cluster_orders_by_proximity", lambda orders: [fake_orders])
+    monkeypatch.setattr(
+        delivery_routes, "_compute_distances_and_durations", fake_compute
+    )
+    monkeypatch.setattr(
+        delivery_routes, "cluster_orders_by_proximity", lambda orders: [fake_orders]
+    )
 
-    resp = client.get("/api/deliveries/eco", params={"latitude": 37.0, "longitude": -122.0})
+    resp = client.get(
+        "/api/deliveries/eco", params={"latitude": 37.0, "longitude": -122.0}
+    )
     assert resp.status_code == 200
     data = resp.json()
 
@@ -271,9 +323,13 @@ def test_ready_orders_endpoint(client, monkeypatch):
     async def fake_compute(src_lng, src_lat, dests):
         return ({"r1": 150}, {"r1": 30})
 
-    monkeypatch.setattr(delivery_routes, "_compute_distances_and_durations", fake_compute)
+    monkeypatch.setattr(
+        delivery_routes, "_compute_distances_and_durations", fake_compute
+    )
 
-    resp = client.get("/api/deliveries/ready", params={"latitude": 37, "longitude": -122})
+    resp = client.get(
+        "/api/deliveries/ready", params={"latitude": 37, "longitude": -122}
+    )
     assert resp.status_code == 200
     data = resp.json()
 
