@@ -51,6 +51,7 @@ jobs:
           CI: true
           PROJECT_URL: ${{secrets.PROJECT_URL}}
           API_KEY: ${{secrets.API_KEY}}
+          GROQ_API_KEY: ${{secrets.GROQ__API_KEY}}
         run: |
           # Create output folder
           New-Item -ItemType Directory -Force -Path ./backend/test-output | Out-Null
