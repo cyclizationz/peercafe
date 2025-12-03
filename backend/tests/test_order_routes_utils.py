@@ -87,13 +87,17 @@ def test_validate_status_transition_raises():
 
 
 def test_prepare_status_update_data_picked_up_and_delivered():
-    upd = orr._prepare_status_update_data(OrderStatus.PICKED_UP, existing_row=None)
+    upd = orr._prepare_status_update_data(
+        OrderStatus.PICKED_UP, existing_row=None
+    )
     assert upd["status"] == OrderStatus.PICKED_UP.value
     assert (
         "delivery_code" in upd or "delivery_code" in upd.keys() or True
     )  # code may be generated
 
-    upd2 = orr._prepare_status_update_data(OrderStatus.DELIVERED, existing_row=None)
+    upd2 = orr._prepare_status_update_data(
+        OrderStatus.DELIVERED, existing_row=None
+    )
     assert upd2["status"] == OrderStatus.DELIVERED.value
     assert "actual_delivery_time" in upd2
 
@@ -116,46 +120,47 @@ def test_validate_delivery_status_transition():
         orr._validate_delivery_status_transition(OrderStatus.READY.value)
 
 
-# def test_update_loyalty_points_updates_db(monkeypatch):
-#     # Fake supabase client capturing updates and inserts
-#     class FakeQuery:
-#         def __init__(self, data=None):
-#             self._data = data
+def test_update_loyalty_points_updates_db(monkeypatch):
+    # Fake supabase client capturing updates and inserts
+    class FakeQuery:
+        def __init__(self, data=None):
+            self._data = data
 
-#         def select(self, *args, **kwargs):
-#             return self
+        def select(self, *args, **kwargs):
+            return self
 
-#         def eq(self, *args, **kwargs):
-#             return self
+        def eq(self, *args, **kwargs):
+            return self
 
-#         def execute(self):
-#             class R:
-#                 def __init__(self, data):
-#                     self.data = data
+        def execute(self):
+            class R:
+                def __init__(self, data):
+                    self.data = data
 
-#             return R(self._data)
+            return R(self._data)
 
-#         def update(self, payload):
-#             # record update
-#             self._updated = payload
-#             return self
+        def update(self, payload):
+            # record update
+            self._updated = payload
+            return self
 
-#         def insert(self, payload):
-#             self._inserted = payload
-#             return self
+        def insert(self, payload):
+            self._inserted = payload
+            return self
 
-#     class FakeClient:
-#         def __init__(self, points):
-#             self._points = points
+    class FakeClient:
+        def __init__(self, points):
+            self._points = points
 
-#         def table(self, _):
-#             if _ == "users":
-#                 return FakeQuery([{"loyalty_points": self._points}])
-#             return FakeQuery()
+        def table(self, _):
+            if _ == "users":
+                return FakeQuery([{"loyalty_points": self._points}])
+            return FakeQuery()
 
-#     fake = FakeClient(100)
-#     # monkeypatch table methods to capture calls for insert
-#     orr.update_loyalty_points(fake, "u1", 50, order_id="o1")
-#     # After update, print statements executed; we assert no exceptions and optimistic behavior
-#     # There is no return value; ensure function completes
-#     assert True
+    fake = FakeClient(100)
+    # monkeypatch table methods to capture calls for insert
+    orr.update_loyalty_points(fake, "u1", 50, order_id="o1")
+    # After update, print statements executed; we assert no exceptions
+    # and optimistic behavior. There is no return value; ensure function
+    # completes
+    assert True
