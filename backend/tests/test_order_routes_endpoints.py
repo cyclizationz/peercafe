@@ -390,9 +390,7 @@ def test_verify_delivery_code_loyalty_points_calculation_various_amounts(monkeyp
 
         # Call the endpoint
         payload = {"delivery_code": "123456"}
-        asyncio.run(
-            orr.verify_delivery_code("test123", payload, mock_supabase)
-        )
+        asyncio.run(orr.verify_delivery_code("test123", payload, mock_supabase))
 
         # Verify correct points calculation
         mock_loyalty_update.assert_called()

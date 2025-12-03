@@ -16,7 +16,6 @@ if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
 
-
 ai_router = APIRouter()
 
 # Initialize recommender (singleton)
