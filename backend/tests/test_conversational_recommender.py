@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
+from utils.conversational_recommender import ConversationalRestaurantBot
 
 import pytest
 from dotenv import load_dotenv
