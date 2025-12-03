@@ -1,6 +1,6 @@
 # backend/tests/test_ai_routes.py
 import uuid
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient

@@ -1,7 +1,3 @@
-import math
-
-import pytest
-
 import routes.delivery_routes as delivery_routes
 from utils.restaurant_recommender import cluster_orders_by_proximity, haversine_meters
 

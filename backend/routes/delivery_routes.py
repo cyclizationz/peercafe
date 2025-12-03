@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from database.supabase_db import create_supabase_client
 from models.delivery_model import Location
 from utils.geocode import geocode_address
-from utils.restaurant_recommender import cluster_orders_by_proximity, haversine_meters
+from utils.restaurant_recommender import cluster_orders_by_proximity
 
 delivery_router = APIRouter()
 supabase = create_supabase_client()

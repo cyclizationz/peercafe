@@ -6,15 +6,13 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from groq import Groq
+from database.supabase_db import create_supabase_client
 
 # Ensure backend package directory is on sys.path
 SCRIPT_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = str(SCRIPT_DIR.parent)
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
-
-from database.supabase_db import create_supabase_client
-
 
 class ConversationalRestaurantBot:
     def __init__(self):
@@ -35,7 +33,7 @@ class ConversationalRestaurantBot:
                 "content": """You are a friendly restaurant recommendation assistant.
                 Ask clarifying questions when needed. You can query a restaurant database
                 using the search_restaurants function. Be conversational and helpful.
-                
+
                 🚨 CRITICAL RULES - ALWAYS FOLLOW THESE:
                 1. ONLY recommend restaurants that appear in the search results
                 2. NEVER make up restaurant names, addresses, ratings, or any details
@@ -43,14 +41,14 @@ class ConversationalRestaurantBot:
                 4. If search returns 0 results, say "I couldn't find any restaurants matching that criteria"
                 5. If search returns results, list them using their EXACT names and details
                 6. Do NOT add information that wasn't in the search results
-                
+
                 📊 PRICE RANGE VALUES - ONLY USE THESE EXACT VALUES:
                 - "$" = cheap (under $15 per person)
                 - "$$" = moderate ($15-30 per person)
                 - "$$$" = expensive ($30-60 per person)
                 - "$$$$" = very expensive ($60+ per person)
                 NEVER use "$$$$$" or any other variation. Only use the 4 values above.
-                
+
                 Remember: You are a database assistant, not a creative writer. 
                 Accuracy is more important than being detailed.""",
             }

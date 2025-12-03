@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
+from utils.conversational_recommender import ConversationalRestaurantBot
 
 import pytest
 from dotenv import load_dotenv
@@ -26,12 +27,6 @@ load_dotenv(PROJECT_ROOT / ".env")
 BACKEND_DIR = PROJECT_ROOT / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
-
-# --------------------------------------------------------------
-# 3. Import the class
-# --------------------------------------------------------------
-from utils.conversational_recommender import ConversationalRestaurantBot
-
 
 # --------------------------------------------------------------
 # Helper – mimics real Supabase response
