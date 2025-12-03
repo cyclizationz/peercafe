@@ -30,6 +30,7 @@ import {
   Deck as OutdoorIcon,
 } from '@mui/icons-material';
 import Navbar from '../../../_components/navbar';
+import MarkdownContent from '../../../_components/MarkdownContent';
 
 // API Base URL - note the /ai prefix for AI routes
 const API_BASE = 'http://localhost:8000/api/ai';
@@ -192,6 +193,11 @@ export default function ChatPage() {
             <Typography variant="h6" color="text.secondary">
               Chat with our AI to find the perfect restaurant
             </Typography>
+            <Alert severity="info" sx={{ mt: 2 }}>
+              AI responses may be incorrect or incomplete. Do not rely on them
+              alone for important decisions; always use your own judgment and
+              up-to-date information.
+            </Alert>
           </Box>
           
           {sessionId && (
@@ -321,17 +327,28 @@ export default function ChatPage() {
                             flex: restaurants.length > 0 ? 1 : 'initial',
                           }}
                         >
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              whiteSpace: 'pre-wrap',
-                              wordBreak: 'break-word',
-                              color: msg.role === 'user' ? 'white' : 'text.primary',
-                              mb: restaurants.length > 0 ? 2 : 0,
-                            }}
-                          >
-                            {text}
-                          </Typography>
+                          {msg.role === 'user' ? (
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word',
+                                color: 'white',
+                                mb: restaurants.length > 0 ? 2 : 0,
+                              }}
+                            >
+                              {text}
+                            </Typography>
+                          ) : (
+                            <Box
+                              sx={{
+                                mb: restaurants.length > 0 ? 2 : 0,
+                                color: 'text.primary',
+                              }}
+                            >
+                              <MarkdownContent content={text} />
+                            </Box>
+                          )}
 
                           {/* Restaurant Cards */}
                           {restaurants.length > 0 && (
