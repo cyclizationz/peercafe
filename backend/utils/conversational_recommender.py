@@ -6,6 +6,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from groq import Groq
+
 from database.supabase_db import create_supabase_client
 
 # Ensure backend package directory is on sys.path
@@ -13,6 +14,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = str(SCRIPT_DIR.parent)
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
+
 
 class ConversationalRestaurantBot:
     def __init__(self):

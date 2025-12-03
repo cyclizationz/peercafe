@@ -382,7 +382,9 @@ class TestPasswordHashing:
     @patch("routes.auth_routes.supabase")
     def test_get_loyalty_points_not_found(self, mock_supabase, client):
         """GET loyalty points returns 404 when user not found"""
-        mock_supabase.from_.return_value.select.return_value.eq.return_value.execute.return_value.data = []
+        mock_supabase.from_.return_value.select.return_value.eq.return_value.execute.return_value.data = (
+            []
+        )
 
         response = client.get("/api/u-missing/loyalty-points")
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -406,7 +408,9 @@ class TestPasswordHashing:
     def test_add_loyalty_points_transaction_success(self, mock_supabase, client):
         """POST loyalty history records a transaction"""
         # chain: from_().insert().execute()
-        mock_supabase.from_.return_value.insert.return_value.execute.return_value.data = [{"id": 7}]
+        mock_supabase.from_.return_value.insert.return_value.execute.return_value.data = [
+            {"id": 7}
+        ]
 
         payload = {"order_id": "o1", "points_earned": 10}
         response = client.post("/api/u-1/loyalty-points/history", json=payload)
