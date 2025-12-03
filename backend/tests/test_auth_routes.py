@@ -366,3 +366,51 @@ class TestPasswordHashing:
         # But both verify correctly
         assert bcrypt.checkpw(password.encode("utf-8"), hash1.encode("utf-8"))
         assert bcrypt.checkpw(password.encode("utf-8"), hash2.encode("utf-8"))
+
+    @patch("routes.auth_routes.supabase")
+    def test_get_loyalty_points_found(self, mock_supabase, client):
+        """GET loyalty points returns balance when found"""
+        mock_supabase.from_.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+            {"loyalty_points": 42}
+        ]
+
+        response = client.get("/api/u-1/loyalty-points")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["loyalty_points"] == 42
+
+    @patch("routes.auth_routes.supabase")
+    def test_get_loyalty_points_not_found(self, mock_supabase, client):
+        """GET loyalty points returns 404 when user not found"""
+        mock_supabase.from_.return_value.select.return_value.eq.return_value.execute.return_value.data = []
+
+        response = client.get("/api/u-missing/loyalty-points")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @patch("routes.auth_routes.supabase")
+    def test_get_loyalty_history_returns_list(self, mock_supabase, client):
+        """GET loyalty history returns list of transactions"""
+        fake = [{"id": 1, "points_earned": 10}, {"id": 2, "points_earned": 5}]
+        # chain: from_().select().eq().order().range().execute()
+        mock_supabase.from_.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value.data = (
+            fake
+        )
+
+        response = client.get("/api/u-1/loyalty-points/history?limit=2&offset=0")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        assert data == fake
+
+    @patch("routes.auth_routes.supabase")
+    def test_add_loyalty_points_transaction_success(self, mock_supabase, client):
+        """POST loyalty history records a transaction"""
+        # chain: from_().insert().execute()
+        mock_supabase.from_.return_value.insert.return_value.execute.return_value.data = [{"id": 7}]
+
+        payload = {"order_id": "o1", "points_earned": 10}
+        response = client.post("/api/u-1/loyalty-points/history", json=payload)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["message"] == "Transaction recorded successfully"
+        assert "data" in data
