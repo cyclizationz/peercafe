@@ -3,13 +3,13 @@ name: Backend Test Suite 🐍
 on:
   workflow_dispatch:   # allows manual triggering
   pull_request:
-    branches: ["main"]
+    branches: ["main", "dev"]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-windows-conda.yml'
       - 'backend/requirements.yaml'
   push:
-    branches: ["main"]
+    branches: ["main", "dev"]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-windows-conda.yml'
