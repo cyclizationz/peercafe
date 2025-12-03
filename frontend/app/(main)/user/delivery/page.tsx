@@ -842,8 +842,8 @@ export default function DeliveryPage() {
 
         {/* Eco-friendly suggestion */}
         {ecoOption && (
-          <Box sx={{ width: '100%', mb: 4 }}>
-            <Card sx={{ borderRadius: 3, mb: 2, boxShadow: 3, width: '80%' }}>
+          <Box sx={{ width: '100%', mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <Card sx={{ borderRadius: 3, mb: 2, boxShadow: 3, width: { xs: '95%', sm: '80%', md: '60%' }, mx: 'auto' }}>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Box>
