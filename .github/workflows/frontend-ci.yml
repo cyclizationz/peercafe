@@ -25,7 +25,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Unit tests + coverage on Linux + Windows
   unit:
     name: Frontend - Unit & Coverage (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -33,6 +32,12 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         node-version: [18.x]
+
+    env:
+      CI: true
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,17 +56,10 @@ jobs:
       - name: Build (for tests that rely on build)
         run: npm run build --if-present
         working-directory: ./frontend
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Run unit tests with coverage (Jest)
         run: npm run test:coverage --if-present -- --coverageDirectory=coverage --coverageReporters=lcov
         working-directory: ./frontend
-        env:
-          CI: true
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Upload unit test artifact
         if: always()
@@ -84,69 +82,3 @@ jobs:
           name: frontend-coverage-${{ matrix.os }}
           fail_ci_if_error: false
           verbose: true
-          
-  # Playwright E2E for Windows
-  # This is currently disabled due to the nascent nature of the project
-  # We plan to re-enable it once the E2E tests are more stable and comprehensive
-  # e2e-windows:
-  #   name: Frontend - Playwright E2E (Windows)
-  #   runs-on: windows-latest
-  #   needs: unit
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 18
-  #         cache: 'npm'
-  #         cache-dependency-path: './frontend/package-lock.json'
-
-  #     - name: Install deps
-  #       run: npm install
-  #       working-directory: ./frontend
-
-  #     - name: Build Next for production
-  #       run: npm run build
-  #       working-directory: ./frontend
-
-  #     - name: Install Playwright browsers
-  #       run: npx playwright install
-  #       working-directory: ./frontend
-
-  #     - name: Start Next.js (background on Windows)
-  #       shell: cmd
-  #       run: |
-  #         pushd frontend
-  #         REM start Next.js production server in background on port 3000
-  #         start /b npm run start
-  #         popd
-
-  #     - name: Wait for app to be ready
-  #       shell: pwsh
-  #       run: |
-  #         $max = 30
-  #         $i = 0
-  #         while ($i -lt $max) {
-  #           try {
-  #             $r = Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing -TimeoutSec 3
-  #             if ($r.StatusCode -eq 200) { Write-Host "App available"; exit 0 }
-  #           } catch {}
-  #           Start-Sleep -s 2
-  #           $i++
-  #         }
-  #         Write-Error "Timeout waiting for app on http://localhost:3000"
-
-  #     - name: Run Playwright tests
-  #       run: npx playwright test --reporter=list
-  #       working-directory: ./frontend
-  #       env:
-  #         CI: true
-
-  #     - name: Upload Playwright results
-  #       if: always()
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: playwright-results
-  #         path: frontend/playwright-report || frontend/test-results || frontend/e2e-results
