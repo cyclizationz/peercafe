@@ -26,6 +26,7 @@ jobs:
   backend-pytest-windows:
     name: Backend - pytest (Windows, Conda)
     runs-on: windows-latest
+    environment: production
 
     env:
       CI: true
