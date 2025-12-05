@@ -447,9 +447,9 @@ def cluster_orders_by_proximity(orders, rest_threshold_m=1000, cust_threshold_m=
     AND whose customers are within cust_threshold_m. Returns list of groups (lists of orders).
     Orders missing coordinates are placed into their own singletons.
     """
-    from . import (
-        restaurant_recommender as _mod,  # ensure namespace for _parse_coordinates if needed
-    )
+    # from . import (
+    #     restaurant_recommender as _mod,  # ensure namespace for _parse_coordinates if needed
+    # )
 
     def _parse_coordinates(lat_raw, lng_raw):
         try:
