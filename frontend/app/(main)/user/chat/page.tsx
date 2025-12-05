@@ -133,9 +133,7 @@ export default function ChatPage() {
 
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Error contacting server.'
-      );
+      setError(err instanceof Error ? err.message : 'Error contacting server.');
       setMessages(prev => [
         ...prev,
         {
@@ -252,7 +250,11 @@ export default function ChatPage() {
 
           {/* Error Display */}
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+            <Alert
+              severity="error"
+              sx={{ mb: 3 }}
+              onClose={() => setError(null)}
+            >
               {error}
             </Alert>
           )}
@@ -289,32 +291,33 @@ export default function ChatPage() {
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {messages.map((msg, i) => {
-                  const { text, restaurants } = msg.role === 'assistant'
-                    ? parseRestaurantBuckets(msg.content)
-                    : { text: msg.content, restaurants: [] };
+                  const { text, restaurants } =
+                    msg.role === 'assistant'
+                      ? parseRestaurantBuckets(msg.content)
+                      : { text: msg.content, restaurants: [] };
 
                   return (
                     <Box key={i}>
                       <Box
                         sx={{
                           display: 'flex',
-                          flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
+                          flexDirection:
+                            msg.role === 'user' ? 'row-reverse' : 'row',
                           alignItems: 'flex-start',
                           gap: 1,
                         }}
                       >
                         <Avatar
                           sx={{
-                            bgcolor: msg.role === 'user' ? 'primary.main' : 'secondary.main',
+                            bgcolor:
+                              msg.role === 'user'
+                                ? 'primary.main'
+                                : 'secondary.main',
                             width: 40,
                             height: 40,
                           }}
                         >
-                          {msg.role === 'user' ? (
-                            <PersonIcon />
-                          ) : (
-                            <BotIcon />
-                          )}
+                          {msg.role === 'user' ? <PersonIcon /> : <BotIcon />}
                         </Avatar>
                         <Paper
                           elevation={1}
@@ -378,7 +381,13 @@ export default function ChatPage() {
                                   }}
                                 >
                                   <CardContent>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        mb: 1,
+                                      }}
+                                    >
                                       <RestaurantIcon
                                         sx={{ color: 'primary.main', mr: 1 }}
                                       />
@@ -393,7 +402,13 @@ export default function ChatPage() {
                                     </Box>
 
                                     {restaurant.rating && (
-                                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                      <Box
+                                        sx={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          mb: 1,
+                                        }}
+                                      >
                                         <Rating
                                           value={restaurant.rating}
                                           readOnly
@@ -412,38 +427,97 @@ export default function ChatPage() {
 
                                     <Divider sx={{ my: 1.5 }} />
 
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 0.5,
+                                      }}
+                                    >
                                       {restaurant.cuisine && (
                                         <Chip
                                           label={restaurant.cuisine}
                                           size="small"
-                                          sx={{ alignSelf: 'flex-start', mb: 1 }}
+                                          sx={{
+                                            alignSelf: 'flex-start',
+                                            mb: 1,
+                                          }}
                                         />
                                       )}
 
                                       {restaurant.price_range && (
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                          <MoneyIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                                          <Typography variant="body2" color="text.secondary">
+                                        <Box
+                                          sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                          }}
+                                        >
+                                          <MoneyIcon
+                                            sx={{
+                                              fontSize: 16,
+                                              mr: 0.5,
+                                              color: 'text.secondary',
+                                            }}
+                                          />
+                                          <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                          >
                                             {restaurant.price_range}
                                           </Typography>
                                         </Box>
                                       )}
 
                                       {restaurant.takes_reservations && (
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                          <ReservationIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                                          <Typography variant="body2" color="text.secondary">
-                                            Reservations: {restaurant.takes_reservations === 'true' ? 'Yes' : 'No'}
+                                        <Box
+                                          sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                          }}
+                                        >
+                                          <ReservationIcon
+                                            sx={{
+                                              fontSize: 16,
+                                              mr: 0.5,
+                                              color: 'text.secondary',
+                                            }}
+                                          />
+                                          <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                          >
+                                            Reservations:{' '}
+                                            {restaurant.takes_reservations ===
+                                            'true'
+                                              ? 'Yes'
+                                              : 'No'}
                                           </Typography>
                                         </Box>
                                       )}
 
                                       {restaurant.outdoor_seating && (
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                          <OutdoorIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                                          <Typography variant="body2" color="text.secondary">
-                                            Outdoor: {restaurant.outdoor_seating === 'true' ? 'Yes' : 'No'}
+                                        <Box
+                                          sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                          }}
+                                        >
+                                          <OutdoorIcon
+                                            sx={{
+                                              fontSize: 16,
+                                              mr: 0.5,
+                                              color: 'text.secondary',
+                                            }}
+                                          />
+                                          <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                          >
+                                            Outdoor:{' '}
+                                            {restaurant.outdoor_seating ===
+                                            'true'
+                                              ? 'Yes'
+                                              : 'No'}
                                           </Typography>
                                         </Box>
                                       )}
@@ -549,7 +623,8 @@ export default function ChatPage() {
           {/* Footer Info */}
           <Box sx={{ mt: 4, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              💡 The AI remembers your conversation context for better recommendations
+              💡 The AI remembers your conversation context for better
+              recommendations
             </Typography>
           </Box>
         </Box>

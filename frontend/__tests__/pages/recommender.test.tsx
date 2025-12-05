@@ -15,7 +15,10 @@ jest.mock('@/utils/supabase/client', () => ({
     from: () => ({
       select: () => ({
         eq: () => ({
-          single: async () => ({ data: { id: 'u-test', name: 'Test User' }, error: null }),
+          single: async () => ({
+            data: { id: 'u-test', name: 'Test User' },
+            error: null,
+          }),
         }),
       }),
     }),
@@ -53,17 +56,19 @@ describe('Admin Recommendations Page', () => {
   });
 
   it('displays results when API returns recommendation', async () => {
-    const fetchMock = jest.spyOn(global, 'fetch').mockImplementation((url: string | URL | Request) => {
-      if (typeof url === 'string' && url.includes('/recommendations')) {
-        return Promise.resolve({
-          ok: true,
-          headers: { get: () => 'application/json' },
-          json: async () => ({ recommendation: 'Some results' }),
-          text: async () => 'Some results',
-        } as any);
-      }
-      return Promise.resolve({ ok: false } as any);
-    });
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation((url: string | URL | Request) => {
+        if (typeof url === 'string' && url.includes('/recommendations')) {
+          return Promise.resolve({
+            ok: true,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ recommendation: 'Some results' }),
+            text: async () => 'Some results',
+          } as any);
+        }
+        return Promise.resolve({ ok: false } as any);
+      });
 
     render(
       <CartProvider>

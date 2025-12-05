@@ -112,7 +112,9 @@ export default function DeliveryPage() {
     null
   );
   const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
-  const [groupOrderDetails, setGroupOrderDetails] = React.useState<Order[] | null>(null);
+  const [groupOrderDetails, setGroupOrderDetails] = React.useState<
+    Order[] | null
+  >(null);
   const [groupLoading, setGroupLoading] = React.useState(false);
   const [activeOrder, setActiveOrder] = React.useState<ActiveOrder | null>(
     null
@@ -428,11 +430,16 @@ export default function DeliveryPage() {
     }
   }, [sourceLocation]);
 
-  const fetchEcoOption = async (lat: number | undefined, long: number | undefined) => {
+  const fetchEcoOption = async (
+    lat: number | undefined,
+    long: number | undefined
+  ) => {
     if (lat === undefined || long === undefined) return;
 
     try {
-      const response = await axios.get(`${backend_url}/deliveries/eco?latitude=${lat}&longitude=${long}`);
+      const response = await axios.get(
+        `${backend_url}/deliveries/eco?latitude=${lat}&longitude=${long}`
+      );
       if (response && response.data) {
         setEcoOption(response.data);
       } else {
@@ -842,10 +849,29 @@ export default function DeliveryPage() {
 
         {/* Eco-friendly suggestion */}
         {ecoOption && (
-          <Box sx={{ width: '100%', mb: 4, display: 'flex', justifyContent: 'center' }}>
-            <Card sx={{ borderRadius: 3, mb: 2, boxShadow: 3, width: { xs: '95%', sm: '80%', md: '60%' }, mx: 'auto' }}>
+          <Box
+            sx={{
+              width: '100%',
+              mb: 4,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <Card
+              sx={{
+                borderRadius: 3,
+                mb: 2,
+                boxShadow: 3,
+                width: { xs: '95%', sm: '80%', md: '60%' },
+                mx: 'auto',
+              }}
+            >
               <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
                   <Box>
                     <Typography variant="subtitle1" fontWeight={700}>
                       Eco-friendly Option
@@ -855,13 +881,17 @@ export default function DeliveryPage() {
                     </Typography>
                     {ecoOption.type === 'group' && (
                       <Typography variant="body2" sx={{ mt: 1 }}>
-                        Group of {ecoOption.group_size} orders: {ecoOption.orders?.slice(0,3).join(', ')}{ecoOption.orders?.length > 3 ? '...' : ''}
+                        Group of {ecoOption.group_size} orders:{' '}
+                        {ecoOption.orders?.slice(0, 3).join(', ')}
+                        {ecoOption.orders?.length > 3 ? '...' : ''}
                       </Typography>
                     )}
                     {ecoOption.type === 'single' && (
                       <Typography variant="body2" sx={{ mt: 1 }}>
                         Closest order: {ecoOption.orders?.[0]}
-                        {ecoOption.distance_meters ? ` — ${Math.round(ecoOption.distance_meters)} m away` : ''}
+                        {ecoOption.distance_meters
+                          ? ` — ${Math.round(ecoOption.distance_meters)} m away`
+                          : ''}
                       </Typography>
                     )}
                   </Box>
@@ -872,9 +902,14 @@ export default function DeliveryPage() {
                         onClick={() => {
                           // Try to find full order in readyOrders
                           const oid = ecoOption.orders?.[0];
-                          const found = readyOrders.find(r => String(r.order_id) === String(oid));
+                          const found = readyOrders.find(
+                            r => String(r.order_id) === String(oid)
+                          );
                           if (found) handleAcceptOrder(found);
-                          else alert('Order details not yet loaded. Please accept from the list below.');
+                          else
+                            alert(
+                              'Order details not yet loaded. Please accept from the list below.'
+                            );
                         }}
                       >
                         Accept Eco Order
@@ -888,7 +923,9 @@ export default function DeliveryPage() {
                           const ids: string[] = ecoOption.orders || [];
                           const local = (ids || [])
                             .map((id: string) =>
-                              readyOrders.find(r => String(r.order_id) === String(id))
+                              readyOrders.find(
+                                r => String(r.order_id) === String(id)
+                              )
                             )
                             .filter(Boolean) as Order[];
                           if (local && local.length === ids.length) {
@@ -902,11 +939,16 @@ export default function DeliveryPage() {
                           try {
                             const results = await Promise.all(
                               ids.map(id =>
-                                axios.get(`${backend_url}/orders/${id}`).then(r => r.data).catch(() => null)
+                                axios
+                                  .get(`${backend_url}/orders/${id}`)
+                                  .then(r => r.data)
+                                  .catch(() => null)
                               )
                             );
                             const fetched = results.filter(Boolean) as Order[];
-                            setGroupOrderDetails(fetched.length ? fetched : null);
+                            setGroupOrderDetails(
+                              fetched.length ? fetched : null
+                            );
                           } catch {
                             setGroupOrderDetails(null);
                           } finally {
@@ -925,7 +967,12 @@ export default function DeliveryPage() {
           </Box>
         )}
         {/* Group modal */}
-        <Dialog open={isGroupModalOpen} onClose={() => setIsGroupModalOpen(false)} fullWidth maxWidth="sm">
+        <Dialog
+          open={isGroupModalOpen}
+          onClose={() => setIsGroupModalOpen(false)}
+          fullWidth
+          maxWidth="sm"
+        >
           <DialogTitle>Eco Group Orders</DialogTitle>
           <DialogContent>
             {groupLoading ? (
@@ -935,17 +982,27 @@ export default function DeliveryPage() {
                 {groupOrderDetails.map(o => (
                   <ListItem key={o.order_id} divider>
                     <ListItemText
-                      primary={`${o.restaurants?.name || 'Unknown'} — Order ${String(o.order_id).substring(0,8)}`}
+                      primary={`${o.restaurants?.name || 'Unknown'} — Order ${String(o.order_id).substring(0, 8)}`}
                       secondary={`Distance: ${o.distance_to_restaurant_miles ?? '--'} mi • ETA: ${o.duration_to_restaurant_minutes ?? '--'} min`}
                     />
-                    <Button variant="contained" onClick={() => { setIsGroupModalOpen(false); handleAcceptOrder(o); }} disabled={acceptingOrder === o.order_id}>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        setIsGroupModalOpen(false);
+                        handleAcceptOrder(o);
+                      }}
+                      disabled={acceptingOrder === o.order_id}
+                    >
                       Accept
                     </Button>
                   </ListItem>
                 ))}
               </List>
             ) : (
-              <Typography sx={{ pt: 1 }}>Order details not loaded yet. Please accept from the orders list below.</Typography>
+              <Typography sx={{ pt: 1 }}>
+                Order details not loaded yet. Please accept from the orders list
+                below.
+              </Typography>
             )}
           </DialogContent>
           <DialogActions>

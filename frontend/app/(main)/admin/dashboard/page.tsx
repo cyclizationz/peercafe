@@ -304,9 +304,7 @@ export default function AdminDashboard() {
             }}
           >
             <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📊</div>
-            <h3 style={{ margin: '0 0 8px 0', color: '#757575' }}>
-              Analytics
-            </h3>
+            <h3 style={{ margin: '0 0 8px 0', color: '#757575' }}>Analytics</h3>
             <p style={{ margin: '0', color: '#64748b', fontSize: '0.9rem' }}>
               Coming Soon...
             </p>

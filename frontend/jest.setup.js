@@ -44,7 +44,9 @@ if (typeof global.Request === 'undefined') {
         this.url = '';
       }
       this.method = (init && init.method) || (input && input.method) || 'GET';
-      this.headers = new HeadersPoly((init && init.headers) || (input && input.headers) || {});
+      this.headers = new HeadersPoly(
+        (init && init.headers) || (input && input.headers) || {}
+      );
       this.body = init && init.body ? init.body : null;
     }
   }
@@ -61,7 +63,9 @@ if (typeof global.Request === 'undefined') {
     }
     async text() {
       if (this._body == null) return '';
-      return typeof this._body === 'string' ? this._body : JSON.stringify(this._body);
+      return typeof this._body === 'string'
+        ? this._body
+        : JSON.stringify(this._body);
     }
   }
 

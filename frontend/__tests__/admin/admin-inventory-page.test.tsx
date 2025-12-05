@@ -138,9 +138,7 @@ describe('AdminInventoryPage', () => {
       ok: true,
       json: async () => ({ success: true, suggestions: 'Promo text' }),
     });
-    fireEvent.click(
-      screen.getByRole('button', { name: /Promo Suggestions/i })
-    );
+    fireEvent.click(screen.getByRole('button', { name: /Promo Suggestions/i }));
     await waitFor(() =>
       expect(screen.getByText(/Promo text/i)).toBeInTheDocument()
     );
@@ -159,5 +157,3 @@ describe('AdminInventoryPage', () => {
     ).toBeInTheDocument();
   });
 });
-
-

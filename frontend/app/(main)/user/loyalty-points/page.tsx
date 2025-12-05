@@ -69,7 +69,7 @@ export default function LoyaltyPointsPage() {
     } finally {
       setAuthLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     getCurrentUser();
@@ -80,13 +80,16 @@ export default function LoyaltyPointsPage() {
 
   const fetchPointsData = async () => {
     try {
-      axios.get(`${backend_url}/${userId}/loyalty-points`).then((response) => {
-        const data = response.data;
-        setPointsData(data);
-      }).catch((error) => {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching points data:', error);
-      });
+      axios
+        .get(`${backend_url}/${userId}/loyalty-points`)
+        .then(response => {
+          const data = response.data;
+          setPointsData(data);
+        })
+        .catch(error => {
+          // eslint-disable-next-line no-console
+          console.error('Error fetching points data:', error);
+        });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error fetching points data:', error);
@@ -95,15 +98,18 @@ export default function LoyaltyPointsPage() {
 
   const fetchPointsHistory = async () => {
     try {
-      const response = await axios.get(`${backend_url}/${userId}/loyalty-points/history`).then((response) => {
-        const data = response.data;
-        setHistory(Array.isArray(data) ? data : []);
-        setLoading(false);
-      }).catch((error) => {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching points history:', error);
-        setLoading(false);
-      });
+      const response = await axios
+        .get(`${backend_url}/${userId}/loyalty-points/history`)
+        .then(response => {
+          const data = response.data;
+          setHistory(Array.isArray(data) ? data : []);
+          setLoading(false);
+        })
+        .catch(error => {
+          // eslint-disable-next-line no-console
+          console.error('Error fetching points history:', error);
+          setLoading(false);
+        });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error fetching points history:', error);
@@ -115,7 +121,9 @@ export default function LoyaltyPointsPage() {
     <>
       <Navbar />
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '2.5rem', color: '#2563eb', marginBottom: '30px' }}>
+        <h1
+          style={{ fontSize: '2.5rem', color: '#2563eb', marginBottom: '30px' }}
+        >
           🏆 My Loyalty Points
         </h1>
 
@@ -132,8 +140,12 @@ export default function LoyaltyPointsPage() {
               textAlign: 'center',
             }}
           >
-            <h2 style={{ color: '#64748b', marginBottom: '10px' }}>Current Balance</h2>
-            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#16a34a' }}>
+            <h2 style={{ color: '#64748b', marginBottom: '10px' }}>
+              Current Balance
+            </h2>
+            <div
+              style={{ fontSize: '3rem', fontWeight: 'bold', color: '#16a34a' }}
+            >
               {pointsData.loyalty_points} points
             </div>
             <p style={{ color: '#94a3b8', marginTop: '10px' }}>
@@ -152,14 +164,18 @@ export default function LoyaltyPointsPage() {
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           }}
         >
-          <h2 style={{ color: '#2563eb', marginBottom: '20px' }}>Points History</h2>
+          <h2 style={{ color: '#2563eb', marginBottom: '20px' }}>
+            Points History
+          </h2>
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '40px' }}>
               <div>Loading history...</div>
             </div>
           ) : history.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+            <div
+              style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}
+            >
               <div style={{ fontSize: '3rem', marginBottom: '10px' }}>📊</div>
               <p>No points history yet. Start delivering to earn rewards!</p>
             </div>
@@ -168,32 +184,85 @@ export default function LoyaltyPointsPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', color: '#2b323bff' }}>Date</th>
-                    <th style={{ padding: '12px', textAlign: 'left', color: '#2b323bff' }}>Description</th>
-                    <th style={{ padding: '12px', textAlign: 'right', color: '#2b323bff' }}>Points</th>
-                    <th style={{ padding: '12px', textAlign: 'right', color: '#2b323bff' }}>Balance</th>
+                    <th
+                      style={{
+                        padding: '12px',
+                        textAlign: 'left',
+                        color: '#2b323bff',
+                      }}
+                    >
+                      Date
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px',
+                        textAlign: 'left',
+                        color: '#2b323bff',
+                      }}
+                    >
+                      Description
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px',
+                        textAlign: 'right',
+                        color: '#2b323bff',
+                      }}
+                    >
+                      Points
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px',
+                        textAlign: 'right',
+                        color: '#2b323bff',
+                      }}
+                    >
+                      Balance
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.map((transaction, index) => (
                     <tr
                       key={transaction.id}
-                      style={{ borderBottom: index < history.length - 1 ? '1px solid #f1f5f9' : 'none' }}
+                      style={{
+                        borderBottom:
+                          index < history.length - 1
+                            ? '1px solid #f1f5f9'
+                            : 'none',
+                      }}
                     >
-                      <td style={{ padding: '12px', color: '#2b323bff' }}>{new Date(transaction.created_at).toLocaleDateString()}</td>
-                      <td style={{ padding: '12px', color: '#2b323bff' }}>{transaction.description || 'Points earned from delivery'}</td>
+                      <td style={{ padding: '12px', color: '#2b323bff' }}>
+                        {new Date(transaction.created_at).toLocaleDateString()}
+                      </td>
+                      <td style={{ padding: '12px', color: '#2b323bff' }}>
+                        {transaction.description ||
+                          'Points earned from delivery'}
+                      </td>
                       <td
                         style={{
                           padding: '12px',
                           textAlign: 'right',
-                          color: transaction.points_earned > 0 ? '#16a34a' : '#dc2626',
+                          color:
+                            transaction.points_earned > 0
+                              ? '#16a34a'
+                              : '#dc2626',
                           fontWeight: 'bold',
                         }}
                       >
                         {transaction.points_earned > 0 ? '+' : ''}
                         {transaction.points_earned}
                       </td>
-                      <td style={{ padding: '12px', textAlign: 'right', color: '#2b323bff' }}>{transaction.points_balance}</td>
+                      <td
+                        style={{
+                          padding: '12px',
+                          textAlign: 'right',
+                          color: '#2b323bff',
+                        }}
+                      >
+                        {transaction.points_balance}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
