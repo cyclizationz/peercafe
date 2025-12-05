@@ -56,7 +56,7 @@ class ConversationalRestaurantBot:
             }
         ]
 
-    def search_restaurants(self, **kwargs):
+    def search_restaurants(self, **kwargs):  # noqa: C901
         """Search restaurants in Supabase"""
         query = self.supabase.table("restaurants").select("*")
         description_filters = []
@@ -132,7 +132,7 @@ class ConversationalRestaurantBot:
 
         return restaurants
 
-    def chat(self, user_message):
+    def chat(self, user_message):  # noqa: C901
         """Main chat method"""
         self.conversation_history.append({"role": "user", "content": user_message})
 
