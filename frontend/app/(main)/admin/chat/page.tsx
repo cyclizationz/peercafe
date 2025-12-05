@@ -57,25 +57,25 @@ function parseRestaurantBuckets(content: string): {
 } {
   const bucketRegex = /<bucket="restaurant_database">(.*?)<\/bucket>/g;
   const restaurants: RestaurantData[] = [];
-  
+
   let match;
   while ((match = bucketRegex.exec(content)) !== null) {
     try {
       // Fix malformed JSON (missing quotes)
-      let jsonStr = match[1]
+      const jsonStr = match[1]
         .replace(/(\w+):/g, '"$1":')
         .replace(/: "(\$+),/g, ': "$1",'); // Fix price range missing quote
-      
+
       const data = JSON.parse(jsonStr);
       restaurants.push(data);
     } catch (e) {
       console.error('Error parsing bucket:', e);
     }
   }
-  
+
   // Remove bucket tags from text
   const cleanText = content.replace(bucketRegex, '').trim();
-  
+
   return { text: cleanText, restaurants };
 }
 
@@ -120,7 +120,7 @@ export default function ChatPage() {
       }
 
       const data = await res.json();
-      
+
       // Store session ID from first response
       if (!sessionId && data.session_id) {
         setSessionId(data.session_id);
@@ -160,7 +160,7 @@ export default function ChatPage() {
         console.error('Error resetting chat:', err);
       }
     }
-    
+
     setMessages([]);
     setSessionId(null);
     setError(null);
@@ -199,7 +199,7 @@ export default function ChatPage() {
               important decisions.
             </Alert>
           </Box>
-          
+
           {sessionId && (
             <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Chip
@@ -289,7 +289,7 @@ export default function ChatPage() {
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {messages.map((msg, i) => {
-                  const { text, restaurants } = msg.role === 'assistant' 
+                  const { text, restaurants } = msg.role === 'assistant'
                     ? parseRestaurantBuckets(msg.content)
                     : { text: msg.content, restaurants: [] };
 

@@ -64,19 +64,18 @@ export default function LoyaltyPointsPage() {
 
       setCurrentUser(userData);
       setUserId(user.id);
-      } catch {
+    } catch {
       alert('Authentication error. Please try logging in again.');
     } finally {
       setAuthLoading(false);
     }
-    }
-    
+  }
+
   useEffect(() => {
     getCurrentUser();
     if (!userId) return;
     fetchPointsData();
     fetchPointsHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const fetchPointsData = async () => {
