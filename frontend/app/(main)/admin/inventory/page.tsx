@@ -66,7 +66,9 @@ interface InventorySnapshot {
 }
 
 export default function AdminInventoryPage() {
-  const [snapshot, setSnapshot] = React.useState<InventorySnapshot | null>(null);
+  const [snapshot, setSnapshot] = React.useState<InventorySnapshot | null>(
+    null
+  );
   const [loading, setLoading] = React.useState(true);
   const [analysisLoading, setAnalysisLoading] = React.useState(false);
   const [refillLoading, setRefillLoading] = React.useState(false);
@@ -234,28 +236,26 @@ export default function AdminInventoryPage() {
                 <Chip
                   label={`Low stock: ${snapshot.low_stock_items.length}`}
                   color={
-                    snapshot.low_stock_items.length > 0
-                      ? 'error'
-                      : 'success'
+                    snapshot.low_stock_items.length > 0 ? 'error' : 'success'
                   }
                 />
                 <Chip
                   label={`Overstock: ${snapshot.overstock_items.length}`}
                   color={
-                    snapshot.overstock_items.length > 0
-                      ? 'warning'
-                      : 'default'
+                    snapshot.overstock_items.length > 0 ? 'warning' : 'default'
                   }
                 />
                 <Chip
                   label={`Stagnant: ${snapshot.stagnant_items.length}`}
                   color={
-                    snapshot.stagnant_items.length > 0
-                      ? 'warning'
-                      : 'default'
+                    snapshot.stagnant_items.length > 0 ? 'warning' : 'default'
                   }
                 />
-                <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ ml: 1 }}
+                >
                   Snapshot generated at:{' '}
                   {new Date(snapshot.generated_at).toLocaleString()}
                 </Typography>
@@ -338,10 +338,14 @@ export default function AdminInventoryPage() {
                           {item.last_sales_30d}
                         </TableCell>
                         <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                          <Box
+                            sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}
+                          >
                             <Chip
                               size="small"
-                              label={item.is_available ? 'Available' : 'Unavailable'}
+                              label={
+                                item.is_available ? 'Available' : 'Unavailable'
+                              }
                               color={item.is_available ? 'success' : 'default'}
                             />
                             {snapshot.low_stock_items.some(
@@ -454,11 +458,7 @@ export default function AdminInventoryPage() {
                 variant="outlined"
                 sx={{ p: 2, backgroundColor: '#f9fafb' }}
               >
-                <Typography
-                  variant="subtitle1"
-                  fontWeight="bold"
-                  gutterBottom
-                >
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   Inventory Analysis
                 </Typography>
                 <MarkdownContent content={analysisText} />
@@ -470,11 +470,7 @@ export default function AdminInventoryPage() {
                 variant="outlined"
                 sx={{ p: 2, backgroundColor: '#f0fdf4' }}
               >
-                <Typography
-                  variant="subtitle1"
-                  fontWeight="bold"
-                  gutterBottom
-                >
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   Refill Plan
                 </Typography>
                 <MarkdownContent content={refillPlan} />
@@ -486,11 +482,7 @@ export default function AdminInventoryPage() {
                 variant="outlined"
                 sx={{ p: 2, backgroundColor: '#eff6ff' }}
               >
-                <Typography
-                  variant="subtitle1"
-                  fontWeight="bold"
-                  gutterBottom
-                >
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   Promo Suggestions
                 </Typography>
                 <MarkdownContent content={promoSuggestions} />
@@ -524,5 +516,3 @@ export default function AdminInventoryPage() {
     </>
   );
 }
-
-

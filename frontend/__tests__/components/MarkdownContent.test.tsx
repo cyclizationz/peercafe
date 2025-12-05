@@ -15,5 +15,3 @@ describe('MarkdownContent', () => {
     expect(container.textContent).toContain('Item 2');
   });
 });
-
-

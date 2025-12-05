@@ -16,7 +16,10 @@ jest.mock('@/utils/supabase/client', () => ({
     from: () => ({
       select: () => ({
         eq: () => ({
-          single: async () => ({ data: { id: 'u-test', name: 'Test User' }, error: null }),
+          single: async () => ({
+            data: { id: 'u-test', name: 'Test User' },
+            error: null,
+          }),
         }),
       }),
     }),
@@ -47,15 +50,26 @@ describe('Loyalty Points Page', () => {
 
   it('renders heading and displays points when API returns data', async () => {
     // Mock axios for points and history
-    const axiosGetMock = jest.spyOn(axios, 'get').mockImplementation((url: string) => {
-      if (url.includes('/loyalty-points/history')) {
-        return Promise.resolve({ data: [{ id: 1, points_earned: 10, points_balance: 10, created_at: new Date().toISOString() }] } as any);
-      }
-      if (url.includes('/loyalty-points')) {
-        return Promise.resolve({ data: { loyalty_points: 50 } } as any);
-      }
-      return Promise.reject(new Error('not found'));
-    });
+    const axiosGetMock = jest
+      .spyOn(axios, 'get')
+      .mockImplementation((url: string) => {
+        if (url.includes('/loyalty-points/history')) {
+          return Promise.resolve({
+            data: [
+              {
+                id: 1,
+                points_earned: 10,
+                points_balance: 10,
+                created_at: new Date().toISOString(),
+              },
+            ],
+          } as any);
+        }
+        if (url.includes('/loyalty-points')) {
+          return Promise.resolve({ data: { loyalty_points: 50 } } as any);
+        }
+        return Promise.reject(new Error('not found'));
+      });
 
     render(
       <CartProvider>
@@ -73,15 +87,17 @@ describe('Loyalty Points Page', () => {
   });
 
   it('shows empty history message when none returned', async () => {
-    const axiosGetMock = jest.spyOn(axios, 'get').mockImplementation((url: string) => {
-      if (url.includes('/loyalty-points/history')) {
-        return Promise.resolve({ data: [] } as any);
-      }
-      if (url.includes('/loyalty-points')) {
-        return Promise.resolve({ data: { loyalty_points: 0 } } as any);
-      }
-      return Promise.reject(new Error('not found'));
-    });
+    const axiosGetMock = jest
+      .spyOn(axios, 'get')
+      .mockImplementation((url: string) => {
+        if (url.includes('/loyalty-points/history')) {
+          return Promise.resolve({ data: [] } as any);
+        }
+        if (url.includes('/loyalty-points')) {
+          return Promise.resolve({ data: { loyalty_points: 0 } } as any);
+        }
+        return Promise.reject(new Error('not found'));
+      });
 
     render(
       <CartProvider>
