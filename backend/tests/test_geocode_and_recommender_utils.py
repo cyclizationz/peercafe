@@ -1,6 +1,3 @@
-import asyncio
-import types
-
 import pytest
 
 from utils import geocode as geocode_mod
