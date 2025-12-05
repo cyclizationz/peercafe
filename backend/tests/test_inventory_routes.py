@@ -1,9 +1,9 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 
 from main import app
-
 
 client = TestClient(app)
 
@@ -33,9 +33,10 @@ sample_row = {
 def mock_supabase():
     # Ensure the global supabase in the module is reset so our patched
     # create_supabase_client is used.
-    with patch("routes.inventory_routes.supabase", None), patch(
-        "routes.inventory_routes.create_supabase_client"
-    ) as mock_create:
+    with (
+        patch("routes.inventory_routes.supabase", None),
+        patch("routes.inventory_routes.create_supabase_client") as mock_create,
+    ):
         mock_client = MagicMock()
         mock_table = MagicMock()
         mock_table.select.return_value = mock_table
@@ -93,29 +94,36 @@ def test_inventory_promo_suggestions_success(mock_advisor_cls, mock_supabase):
     assert data["suggestions"] == "Promo text"
 
 
-@patch("routes.inventory_routes.InventoryLLMAdvisor", side_effect=ValueError("Missing key"))
+@patch(
+    "routes.inventory_routes.InventoryLLMAdvisor", side_effect=ValueError("Missing key")
+)
 def test_inventory_analysis_missing_key(mock_advisor_cls, mock_supabase):
     response = client.post("/api/ai/inventory/analysis", json={})
     assert response.status_code == 503
     assert "Missing key" in response.json()["detail"]
 
 
-@patch("routes.inventory_routes.InventoryLLMAdvisor", side_effect=ValueError("Missing key"))
+@patch(
+    "routes.inventory_routes.InventoryLLMAdvisor", side_effect=ValueError("Missing key")
+)
 def test_inventory_refill_missing_key(mock_advisor_cls, mock_supabase):
     response = client.post("/api/ai/inventory/refill-plan", json={})
     assert response.status_code == 503
 
 
-@patch("routes.inventory_routes.InventoryLLMAdvisor", side_effect=ValueError("Missing key"))
+@patch(
+    "routes.inventory_routes.InventoryLLMAdvisor", side_effect=ValueError("Missing key")
+)
 def test_inventory_promo_missing_key(mock_advisor_cls, mock_supabase):
     response = client.post("/api/ai/inventory/promo-suggestions", json={})
     assert response.status_code == 503
 
 
 def test_inventory_status_filters_by_restaurant_id():
-    with patch("routes.inventory_routes.supabase", None), patch(
-        "routes.inventory_routes.create_supabase_client"
-    ) as mock_create:
+    with (
+        patch("routes.inventory_routes.supabase", None),
+        patch("routes.inventory_routes.create_supabase_client") as mock_create,
+    ):
         mock_client = MagicMock()
         mock_table = MagicMock()
         mock_table.select.return_value = mock_table
@@ -132,5 +140,3 @@ def test_inventory_status_filters_by_restaurant_id():
             call[0][0] == "restaurant_id" and call[0][1] == 1
             for call in mock_table.eq.call_args_list
         )
-
-

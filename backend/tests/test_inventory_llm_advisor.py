@@ -56,5 +56,3 @@ def test_inventory_llm_advisor_missing_key_raises():
     with patch.dict("os.environ", {}, clear=True):
         with pytest.raises(ValueError):
             InventoryLLMAdvisor()
-
-

@@ -99,7 +99,8 @@ class InventorySnapshot(BaseModel):
     )
 
     low_stock_items: List[LowStockItem] = Field(
-        default_factory=list, description="Items currently below their reorder threshold"
+        default_factory=list,
+        description="Items currently below their reorder threshold",
     )
     overstock_items: List[OverstockItem] = Field(
         default_factory=list,
@@ -141,5 +142,3 @@ class InventorySuggestions(BaseModel):
     summary: InventoryIssueSummary
     refill_recommendations: List[RefillRecommendation] = Field(default_factory=list)
     promo_suggestions: List[PromoSuggestion] = Field(default_factory=list)
-
-

@@ -51,7 +51,7 @@ class ConversationalRestaurantBot:
                 - "$$$$" = very expensive ($60+ per person)
                 NEVER use "$$$$$" or any other variation. Only use the 4 values above.
 
-                Remember: You are a database assistant, not a creative writer. 
+                Remember: You are a database assistant, not a creative writer.
                 Accuracy is more important than being detailed.""",
             }
         ]
