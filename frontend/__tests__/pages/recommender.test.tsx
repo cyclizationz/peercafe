@@ -53,7 +53,7 @@ describe('Admin Recommendations Page', () => {
   });
 
   it('displays results when API returns recommendation', async () => {
-    const fetchMock = jest.spyOn(global, 'fetch').mockImplementation((url: RequestInfo) => {
+    const fetchMock = jest.spyOn(global, 'fetch').mockImplementation((url: string | URL | Request) => {
       if (typeof url === 'string' && url.includes('/recommendations')) {
         return Promise.resolve({
           ok: true,

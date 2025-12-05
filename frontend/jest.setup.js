@@ -122,3 +122,13 @@ jest.mock('next/navigation', () => ({
 
 // Mock environment variables
 process.env.NODE_ENV = 'test';
+
+// Mock react-markdown to avoid ES module parsing issues
+jest.mock('react-markdown', () => {
+  const React = require('react');
+  return function ReactMarkdown({ children }) {
+    // Simple markdown processor: just render the content
+    // This is enough for most tests that just check if text is present
+    return React.createElement(React.Fragment, null, children);
+  };
+});

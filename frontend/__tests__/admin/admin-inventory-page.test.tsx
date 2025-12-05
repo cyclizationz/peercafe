@@ -42,7 +42,7 @@ const sampleSnapshot = {
         description: 'Tasty',
         is_available: true,
         price: 10,
-      quantity: 5,
+        quantity: 5,
         reorder_threshold: 10,
         reorder_quantity: 20,
         lead_time_days: 3,
@@ -155,7 +155,7 @@ describe('AdminInventoryPage', () => {
     render(<AdminInventoryPage />);
 
     expect(
-      await screen.findByText(/Failed to load inventory/i)
+      await screen.findByText(/Failed to fetch inventory status/i)
     ).toBeInTheDocument();
   });
 });
