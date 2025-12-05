@@ -76,7 +76,6 @@ export default function LoyaltyPointsPage() {
     if (!userId) return;
     fetchPointsData();
     fetchPointsHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const fetchPointsData = async () => {
