@@ -12,6 +12,8 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from dotenv import load_dotenv
 
+from utils.conversational_recommender import ConversationalRestaurantBot
+
 # --------------------------------------------------------------
 # 1. Load .env from project root
 # --------------------------------------------------------------
@@ -26,11 +28,6 @@ load_dotenv(PROJECT_ROOT / ".env")
 BACKEND_DIR = PROJECT_ROOT / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
-
-# --------------------------------------------------------------
-# 3. Import the class
-# --------------------------------------------------------------
-from utils.conversational_recommender import ConversationalRestaurantBot
 
 
 # --------------------------------------------------------------

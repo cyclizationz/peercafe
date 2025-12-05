@@ -1,4 +1,4 @@
-from utils.inventory_analyzer import build_inventory_items, analyze_inventory
+from utils.inventory_analyzer import analyze_inventory, build_inventory_items
 
 
 def test_build_inventory_items_and_analyze():
@@ -58,5 +58,3 @@ def test_build_inventory_items_and_analyze():
     assert snapshot.overstock_items[0].item.item_id == 2
     assert len(snapshot.stagnant_items) == 1
     assert snapshot.stagnant_items[0].item.item_id == 3
-
-

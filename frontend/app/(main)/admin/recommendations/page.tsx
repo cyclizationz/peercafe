@@ -51,12 +51,14 @@ export default function RecommendPage() {
 
       // Check content type before parsing
       const contentType = res.headers.get('content-type');
-      
+
       if (!res.ok) {
         // Try to parse error response
         if (contentType && contentType.includes('application/json')) {
           const data = await res.json();
-          throw new Error(data.detail || `API Error: ${res.status} ${res.statusText}`);
+          throw new Error(
+            data.detail || `API Error: ${res.status} ${res.statusText}`
+          );
         } else {
           // If HTML or other format, show more helpful error
           const text = await res.text();
@@ -72,12 +74,12 @@ export default function RecommendPage() {
         const data = await res.json();
         setResult(data.recommendation);
       } else {
-        throw new Error('API returned non-JSON response. Check your API endpoint configuration.');
+        throw new Error(
+          'API returned non-JSON response. Check your API endpoint configuration.'
+        );
       }
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : 'Something went wrong.'
-      );
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -175,14 +177,26 @@ export default function RecommendPage() {
                 variant="outlined"
                 sx={{ mb: 2 }}
               />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
                 <Typography variant="caption" color="text.secondary">
                   Press Ctrl+Enter to submit
                 </Typography>
                 <Button
                   variant="contained"
                   size="large"
-                  endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
+                  endIcon={
+                    loading ? (
+                      <CircularProgress size={20} color="inherit" />
+                    ) : (
+                      <SendIcon />
+                    )
+                  }
                   onClick={getRecommendation}
                   disabled={loading || !query.trim()}
                 >
@@ -204,7 +218,12 @@ export default function RecommendPage() {
             <Card sx={{ border: '1px solid #e0e0e0' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Skeleton variant="circular" width={40} height={40} sx={{ mr: 2 }} />
+                  <Skeleton
+                    variant="circular"
+                    width={40}
+                    height={40}
+                    sx={{ mr: 2 }}
+                  />
                   <Skeleton variant="text" width="60%" height={32} />
                 </Box>
                 <Skeleton variant="text" width="100%" />
@@ -230,7 +249,11 @@ export default function RecommendPage() {
                   <RestaurantIcon
                     sx={{ color: 'primary.main', mr: 1, fontSize: 28 }}
                   />
-                  <Typography variant="h5" fontWeight="bold" color="primary.main">
+                  <Typography
+                    variant="h5"
+                    fontWeight="bold"
+                    color="primary.main"
+                  >
                     Your Personalized Recommendation
                   </Typography>
                 </Box>
@@ -255,7 +278,8 @@ export default function RecommendPage() {
           {!loading && !result && (
             <Box sx={{ mt: 4, textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                💡 Our AI analyzes restaurant data to provide personalized recommendations
+                💡 Our AI analyzes restaurant data to provide personalized
+                recommendations
               </Typography>
             </Box>
           )}

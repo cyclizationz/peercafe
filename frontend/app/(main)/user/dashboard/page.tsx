@@ -194,7 +194,9 @@ function DashboardContent() {
             }}
           >
             <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🤖</div>
-            <h3 style={{ margin: '0 0 8px 0', color: '#1976d2' }}>AI Recommendations</h3>
+            <h3 style={{ margin: '0 0 8px 0', color: '#1976d2' }}>
+              AI Recommendations
+            </h3>
             <p style={{ margin: '0', color: '#64748b', fontSize: '0.9rem' }}>
               Get personalized restaurant suggestions from our AI assistant
             </p>
@@ -222,7 +224,9 @@ function DashboardContent() {
             }}
           >
             <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>💬</div>
-            <h3 style={{ margin: '0 0 8px 0', color: '#1976d2' }}>Chat with AI</h3>
+            <h3 style={{ margin: '0 0 8px 0', color: '#1976d2' }}>
+              Chat with AI
+            </h3>
             <p style={{ margin: '0', color: '#64748b', fontSize: '0.9rem' }}>
               Ask our AI assistant for restaurant recommendations or guidance
             </p>
@@ -258,7 +262,6 @@ function DashboardContent() {
             Track your earnings and rewards from deliveries
           </p>
         </div>
-
 
         <div
           style={{

@@ -3,13 +3,13 @@ name: Backend Test Suite 🐍
 on:
   workflow_dispatch:   # allows manual triggering
   pull_request:
-    branches: ["main"]
+    branches: ["main", "dev"]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-windows-conda.yml'
       - 'backend/requirements.yaml'
   push:
-    branches: ["main"]
+    branches: ["main", "dev"]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-windows-conda.yml'
@@ -55,6 +55,11 @@ jobs:
 
       - name: Run pytest with coverage
         shell: pwsh
+        env:
+          CI: true
+          PROJECT_URL: ${{secrets.PROJECT_URL}}
+          API_KEY: ${{secrets.API_KEY}}
+          GROQ_API_KEY: ${{secrets.GROQ__API_KEY}}
         run: |
           New-Item -ItemType Directory -Force -Path ./backend/test-output | Out-Null
           pytest backend --maxfail=1 --disable-warnings --junitxml=./backend/test-output/junit.xml --cov=backend --cov-report=xml:./backend/coverage.xml

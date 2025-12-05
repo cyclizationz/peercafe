@@ -1,8 +1,8 @@
 """Pydantic models used across the backend."""
 
 from .inventory_model import (  # noqa: F401
-    InventoryItem,
     InventoryIssueSummary,
+    InventoryItem,
     InventorySnapshot,
     InventorySuggestions,
     LowStockItem,
@@ -11,4 +11,3 @@ from .inventory_model import (  # noqa: F401
     RefillRecommendation,
     StagnantItem,
 )
-

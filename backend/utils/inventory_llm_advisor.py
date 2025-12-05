@@ -1,10 +1,9 @@
 import os
 from typing import List
 
-from dotenv import load_dotenv
 from groq import Groq
 
-from models.inventory_model import InventorySnapshot, InventorySuggestions
+from models.inventory_model import InventorySnapshot
 
 
 class InventoryLLMAdvisor:
@@ -159,5 +158,3 @@ class InventoryLLMAdvisor:
 
 
 __all__ = ["InventoryLLMAdvisor"]
-
-

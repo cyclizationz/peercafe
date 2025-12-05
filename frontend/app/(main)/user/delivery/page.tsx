@@ -18,6 +18,13 @@ import {
   Step,
   StepLabel,
   LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
 
 import {
@@ -100,9 +107,15 @@ export default function DeliveryPage() {
   const map = React.useRef<mapboxgl.Map | null>(null);
 
   const [readyOrders, setReadyOrders] = React.useState<Order[]>([]);
+  const [ecoOption, setEcoOption] = React.useState<any>(null);
   const [acceptingOrder, setAcceptingOrder] = React.useState<string | null>(
     null
   );
+  const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
+  const [groupOrderDetails, setGroupOrderDetails] = React.useState<
+    Order[] | null
+  >(null);
+  const [groupLoading, setGroupLoading] = React.useState(false);
   const [activeOrder, setActiveOrder] = React.useState<ActiveOrder | null>(
     null
   );
@@ -412,8 +425,31 @@ export default function DeliveryPage() {
     // Once source location is available, fetch ready orders
     if (sourceLocation != null && sourceLocation != undefined) {
       fetchReadyOrders(sourceLocation.latitude, sourceLocation.longitude);
+      // also fetch eco-friendly option
+      fetchEcoOption(sourceLocation.latitude, sourceLocation.longitude);
     }
   }, [sourceLocation]);
+
+  const fetchEcoOption = async (
+    lat: number | undefined,
+    long: number | undefined
+  ) => {
+    if (lat === undefined || long === undefined) return;
+
+    try {
+      const response = await axios.get(
+        `${backend_url}/deliveries/eco?latitude=${lat}&longitude=${long}`
+      );
+      if (response && response.data) {
+        setEcoOption(response.data);
+      } else {
+        setEcoOption(null);
+      }
+    } catch (err) {
+      // ignore errors silently for now
+      setEcoOption(null);
+    }
+  };
 
   React.useEffect(() => {
     // Wait for both the container and location to be available
@@ -810,6 +846,169 @@ export default function DeliveryPage() {
           Current Active Order
         </h3>
         <ActiveOrderCard />
+
+        {/* Eco-friendly suggestion */}
+        {ecoOption && (
+          <Box
+            sx={{
+              width: '100%',
+              mb: 4,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <Card
+              sx={{
+                borderRadius: 3,
+                mb: 2,
+                boxShadow: 3,
+                width: { xs: '95%', sm: '80%', md: '60%' },
+                mx: 'auto',
+              }}
+            >
+              <CardContent>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight={700}>
+                      Eco-friendly Option
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {ecoOption.reason || ''}
+                    </Typography>
+                    {ecoOption.type === 'group' && (
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        Group of {ecoOption.group_size} orders:{' '}
+                        {ecoOption.orders?.slice(0, 3).join(', ')}
+                        {ecoOption.orders?.length > 3 ? '...' : ''}
+                      </Typography>
+                    )}
+                    {ecoOption.type === 'single' && (
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        Closest order: {ecoOption.orders?.[0]}
+                        {ecoOption.distance_meters
+                          ? ` — ${Math.round(ecoOption.distance_meters)} m away`
+                          : ''}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box>
+                    {ecoOption.type === 'single' && (
+                      <Button
+                        variant="contained"
+                        onClick={() => {
+                          // Try to find full order in readyOrders
+                          const oid = ecoOption.orders?.[0];
+                          const found = readyOrders.find(
+                            r => String(r.order_id) === String(oid)
+                          );
+                          if (found) handleAcceptOrder(found);
+                          else
+                            alert(
+                              'Order details not yet loaded. Please accept from the list below.'
+                            );
+                        }}
+                      >
+                        Accept Eco Order
+                      </Button>
+                    )}
+                    {ecoOption.type === 'group' && (
+                      <Button
+                        variant="outlined"
+                        onClick={async () => {
+                          // Resolve order details from readyOrders if available
+                          const ids: string[] = ecoOption.orders || [];
+                          const local = (ids || [])
+                            .map((id: string) =>
+                              readyOrders.find(
+                                r => String(r.order_id) === String(id)
+                              )
+                            )
+                            .filter(Boolean) as Order[];
+                          if (local && local.length === ids.length) {
+                            setGroupOrderDetails(local);
+                            setIsGroupModalOpen(true);
+                            return;
+                          }
+
+                          // Otherwise fetch missing details from backend
+                          setGroupLoading(true);
+                          try {
+                            const results = await Promise.all(
+                              ids.map(id =>
+                                axios
+                                  .get(`${backend_url}/orders/${id}`)
+                                  .then(r => r.data)
+                                  .catch(() => null)
+                              )
+                            );
+                            const fetched = results.filter(Boolean) as Order[];
+                            setGroupOrderDetails(
+                              fetched.length ? fetched : null
+                            );
+                          } catch {
+                            setGroupOrderDetails(null);
+                          } finally {
+                            setGroupLoading(false);
+                            setIsGroupModalOpen(true);
+                          }
+                        }}
+                      >
+                        View Group
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
+        {/* Group modal */}
+        <Dialog
+          open={isGroupModalOpen}
+          onClose={() => setIsGroupModalOpen(false)}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>Eco Group Orders</DialogTitle>
+          <DialogContent>
+            {groupLoading ? (
+              <Typography sx={{ pt: 1 }}>Loading order details...</Typography>
+            ) : groupOrderDetails && groupOrderDetails.length > 0 ? (
+              <List>
+                {groupOrderDetails.map(o => (
+                  <ListItem key={o.order_id} divider>
+                    <ListItemText
+                      primary={`${o.restaurants?.name || 'Unknown'} — Order ${String(o.order_id).substring(0, 8)}`}
+                      secondary={`Distance: ${o.distance_to_restaurant_miles ?? '--'} mi • ETA: ${o.duration_to_restaurant_minutes ?? '--'} min`}
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        setIsGroupModalOpen(false);
+                        handleAcceptOrder(o);
+                      }}
+                      disabled={acceptingOrder === o.order_id}
+                    >
+                      Accept
+                    </Button>
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography sx={{ pt: 1 }}>
+                Order details not loaded yet. Please accept from the orders list
+                below.
+              </Typography>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsGroupModalOpen(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
 
         <Divider sx={{ bgcolor: 'gray' }} />
         <Divider sx={{ bgcolor: 'gray' }} />

@@ -73,7 +73,7 @@ def analyze_inventory(items: List[InventoryItem]) -> InventorySnapshot:
                 )
             )
 
-    summary = InventoryIssueSummary(
+    InventoryIssueSummary(
         total_items=len(items),
         low_stock_count=len(low_stock),
         overstock_count=len(overstock),
@@ -90,5 +90,3 @@ def analyze_inventory(items: List[InventoryItem]) -> InventorySnapshot:
 
 
 __all__ = ["build_inventory_items", "analyze_inventory"]
-
-

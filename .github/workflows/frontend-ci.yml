@@ -3,14 +3,14 @@ name: Frontend Test Suite 🚀
 # Only run when frontend files (or shared configs) change
 on:
   pull_request:
-    branches: ["main"]
+    branches: ["main", "dev"]
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci.yml'
       - 'package.json'
       - 'package-lock.json'
   push:
-    branches: ["main"]
+    branches: ["main", "dev"]
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci.yml'

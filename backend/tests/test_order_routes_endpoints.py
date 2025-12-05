@@ -260,7 +260,7 @@ def test_verify_delivery_code_awards_loyalty_points_to_delivery_person(monkeypat
 
     # Call the endpoint
     payload = {"delivery_code": "123456"}
-    result = asyncio.run(orr.verify_delivery_code("test123", payload, mock_supabase))
+    asyncio.run(orr.verify_delivery_code("test123", payload, mock_supabase))
 
     # Verify loyalty points were awarded to the delivery person with correct amount
     mock_loyalty_update.assert_called_once()
@@ -323,7 +323,7 @@ def test_verify_delivery_code_no_loyalty_points_when_no_delivery_user(monkeypatc
 
     # Call the endpoint
     payload = {"delivery_code": "123456"}
-    result = asyncio.run(orr.verify_delivery_code("test123", payload, mock_supabase))
+    asyncio.run(orr.verify_delivery_code("test123", payload, mock_supabase))
 
     # Verify no loyalty points were awarded
     mock_loyalty_update.assert_not_called()
@@ -390,9 +390,7 @@ def test_verify_delivery_code_loyalty_points_calculation_various_amounts(monkeyp
 
         # Call the endpoint
         payload = {"delivery_code": "123456"}
-        result = asyncio.run(
-            orr.verify_delivery_code("test123", payload, mock_supabase)
-        )
+        asyncio.run(orr.verify_delivery_code("test123", payload, mock_supabase))
 
         # Verify correct points calculation
         mock_loyalty_update.assert_called()
@@ -474,7 +472,7 @@ def test_complete_delivery_flow_includes_loyalty_points(monkeypatch):
 
     # Execute delivery verification
     payload = {"delivery_code": "999999"}
-    result = asyncio.run(orr.verify_delivery_code(order_id, payload, mock_supabase))
+    asyncio.run(orr.verify_delivery_code(order_id, payload, mock_supabase))
 
     # Verify the complete flow
     assert len(loyalty_calls) == 1

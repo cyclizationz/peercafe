@@ -8,12 +8,13 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
+from utils.conversational_recommender import ConversationalRestaurantBot
+from utils.restaurant_recommender import RestaurantRecommender
+
 BACKEND_DIR = str(Path(__file__).resolve().parent.parent)
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
-from utils.conversational_recommender import ConversationalRestaurantBot
-from utils.restaurant_recommender import RestaurantRecommender
 
 ai_router = APIRouter()
 
