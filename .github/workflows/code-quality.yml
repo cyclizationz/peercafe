@@ -102,6 +102,9 @@ jobs:
 
       - name: Run tests
         shell: bash -el {0}
+        env:
+          PROJECT_URL: ${{secrets.PROJECT_URL}}
+          API_KEY: ${{secrets.API_KEY}}
         run: |
           cd backend
           pytest --cov=. --cov-report=term
