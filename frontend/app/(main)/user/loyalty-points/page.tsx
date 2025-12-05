@@ -184,10 +184,42 @@ export default function LoyaltyPointsPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', color: '#2b323bff' }}>Date</th>
-                    <th style={{ padding: '12px', textAlign: 'left', color: '#2b323bff' }}>Description</th>
-                    <th style={{ padding: '12px', textAlign: 'right', color: '#2b323bff' }}>Points</th>
-                    <th style={{ padding: '12px', textAlign: 'right', color: '#2b323bff' }}>Balance</th>
+                    <th
+                      style={{
+                        padding: '12px',
+                        textAlign: 'left',
+                        color: '#2b323bff',
+                      }}
+                    >
+                      Date
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px',
+                        textAlign: 'left',
+                        color: '#2b323bff',
+                      }}
+                    >
+                      Description
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px',
+                        textAlign: 'right',
+                        color: '#2b323bff',
+                      }}
+                    >
+                      Points
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px',
+                        textAlign: 'right',
+                        color: '#2b323bff',
+                      }}
+                    >
+                      Balance
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -201,8 +233,13 @@ export default function LoyaltyPointsPage() {
                             : 'none',
                       }}
                     >
-                      <td style={{ padding: '12px', color: '#2b323bff' }}>{new Date(transaction.created_at).toLocaleDateString()}</td>
-                      <td style={{ padding: '12px', color: '#2b323bff' }}>{transaction.description || 'Points earned from delivery'}</td>
+                      <td style={{ padding: '12px', color: '#2b323bff' }}>
+                        {new Date(transaction.created_at).toLocaleDateString()}
+                      </td>
+                      <td style={{ padding: '12px', color: '#2b323bff' }}>
+                        {transaction.description ||
+                          'Points earned from delivery'}
+                      </td>
                       <td
                         style={{
                           padding: '12px',
@@ -217,7 +254,15 @@ export default function LoyaltyPointsPage() {
                         {transaction.points_earned > 0 ? '+' : ''}
                         {transaction.points_earned}
                       </td>
-                      <td style={{ padding: '12px', textAlign: 'right', color: '#2b323bff' }}>{transaction.points_balance}</td>
+                      <td
+                        style={{
+                          padding: '12px',
+                          textAlign: 'right',
+                          color: '#2b323bff',
+                        }}
+                      >
+                        {transaction.points_balance}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
