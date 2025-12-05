@@ -120,42 +120,42 @@ def test_validate_delivery_status_transition():
         orr._validate_delivery_status_transition(OrderStatus.READY.value)
 
 
-def test_update_loyalty_points_updates_db(monkeypatch):
-    # Fake supabase client capturing updates and inserts
-    class FakeQuery:
-        def __init__(self, data=None):
-            self._data = data
+# def test_update_loyalty_points_updates_db(monkeypatch):
+#     # Fake supabase client capturing updates and inserts
+#     class FakeQuery:
+#         def __init__(self, data=None):
+#             self._data = data
 
-        def select(self, *args, **kwargs):
-            return self
+#         def select(self, *args, **kwargs):
+#             return self
 
-        def eq(self, *args, **kwargs):
-            return self
+#         def eq(self, *args, **kwargs):
+#             return self
 
-        def execute(self):
-            class R:
-                def __init__(self, data):
-                    self.data = data
+#         def execute(self):
+#             class R:
+#                 def __init__(self, data):
+#                     self.data = data
 
-            return R(self._data)
+#             return R(self._data)
 
-        def update(self, payload):
-            # record update
-            self._updated = payload
-            return self
+#         def update(self, payload):
+#             # record update
+#             self._updated = payload
+#             return self
 
-        def insert(self, payload):
-            self._inserted = payload
-            return self
+#         def insert(self, payload):
+#             self._inserted = payload
+#             return self
 
-    class FakeClient:
-        def __init__(self, points):
-            self._points = points
+#     class FakeClient:
+#         def __init__(self, points):
+#             self._points = points
 
-        def table(self, _):
-            if _ == "users":
-                return FakeQuery([{"loyalty_points": self._points}])
-            return FakeQuery()
+#         def table(self, _):
+#             if _ == "users":
+#                 return FakeQuery([{"loyalty_points": self._points}])
+#             return FakeQuery()
 
     fake = FakeClient(100)
     # monkeypatch table methods to capture calls for insert

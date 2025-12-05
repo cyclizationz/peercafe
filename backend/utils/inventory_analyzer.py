@@ -73,6 +73,13 @@ def analyze_inventory(items: List[InventoryItem]) -> InventorySnapshot:
                 )
             )
 
+    InventoryIssueSummary(
+        total_items=len(items),
+        low_stock_count=len(low_stock),
+        overstock_count=len(overstock),
+        stagnant_count=len(stagnant),
+    )
+
     return InventorySnapshot(
         generated_at=datetime.utcnow(),
         items=items,
