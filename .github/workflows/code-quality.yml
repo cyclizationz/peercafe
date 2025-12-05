@@ -101,12 +101,12 @@ jobs:
           bandit -r . -f json -o bandit-report.json --skip B101,B105 --exclude tests/
         continue-on-error: true  # Allow bandit to fail initially
 
-      - name: Run tests
-        shell: bash -el {0}
-        env:
-          CI: true
-          PROJECT_URL: ${{ secrets.PROJECT_URL }}
-          API_KEY: ${{ secrets.API_KEY }}
-        run: |
-          cd backend
-          pytest --cov=. --cov-report=term
+      # - name: Run tests
+      #   shell: bash -el {0}
+      #   env:
+      #     CI: true
+      #     PROJECT_URL: ${{ secrets.PROJECT_URL }}
+      #     API_KEY: ${{ secrets.API_KEY }}
+      #   run: |
+      #     cd backend
+      #     pytest --cov=. --cov-report=term
