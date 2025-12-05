@@ -76,7 +76,7 @@ class RestaurantRecommender:
             self.provider = "openai"
             print("💰 Using OpenAI API (paid)")
 
-    def search_restaurants(self, **kwargs):
+    def search_restaurants(self, **kwargs):  # noqa: C901
         """
         Search restaurants in Supabase based on filters
 
