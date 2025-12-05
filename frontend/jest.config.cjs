@@ -39,8 +39,11 @@ const customJestConfig = {
   ],
   // Optional: increase timeout for slow tests
   testTimeout: 30000,
-  // Transform file extensions handled by next/jest (should be fine), but add explicit mapping just in case
-  transformIgnorePatterns: ['/node_modules/'],
+  // Allow ESM packages to be transformed by next/jest
+  // This regex whitelists packages that export ES modules so they get transformed
+  transformIgnorePatterns: [
+    'node_modules/(?!(react-markdown|remark-.*|micromark|decode-named-character-reference|character-entities|mdast-util-.*|unist-util-.*|ccount|escape-string-regexp|markdown-table|unified)/)',
+  ],
 };
 
 module.exports = createJestConfig(customJestConfig);
