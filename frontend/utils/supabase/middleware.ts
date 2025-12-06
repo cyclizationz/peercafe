@@ -168,11 +168,15 @@ export async function updateSession(request: NextRequest) {
       const userRole = await getUserRole(supabase, user.id);
 
       if (userRole !== 'user') {
-        console.log('🚫 Admin user attempted to access user route');
-        // Redirect to admin dashboard with info message
-        const redirectUrl = new URL('/admin/dashboard', request.url);
-        redirectUrl.searchParams.set('info', 'admin_redirect');
-        return NextResponse.redirect(redirectUrl);
+        // Allow admins to access the public-facing restaurant pages so they can view stores
+        // and place orders like a regular user. Other user routes remain restricted.
+        if (!pathname.startsWith('/user/restaurants')) {
+          console.log('🚫 Admin user attempted to access restricted user route');
+          // Redirect to admin dashboard with info message
+          const redirectUrl = new URL('/admin/dashboard', request.url);
+          redirectUrl.searchParams.set('info', 'admin_redirect');
+          return NextResponse.redirect(redirectUrl);
+        }
       }
       break;
     // ;

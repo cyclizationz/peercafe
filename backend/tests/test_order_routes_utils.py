@@ -87,13 +87,17 @@ def test_validate_status_transition_raises():
 
 
 def test_prepare_status_update_data_picked_up_and_delivered():
-    upd = orr._prepare_status_update_data(OrderStatus.PICKED_UP, existing_row=None)
+    upd = orr._prepare_status_update_data(
+        OrderStatus.PICKED_UP, existing_row=None
+    )
     assert upd["status"] == OrderStatus.PICKED_UP.value
     assert (
         "delivery_code" in upd or "delivery_code" in upd.keys() or True
     )  # code may be generated
 
-    upd2 = orr._prepare_status_update_data(OrderStatus.DELIVERED, existing_row=None)
+    upd2 = orr._prepare_status_update_data(
+        OrderStatus.DELIVERED, existing_row=None
+    )
     assert upd2["status"] == OrderStatus.DELIVERED.value
     assert "actual_delivery_time" in upd2
 
@@ -153,9 +157,10 @@ def test_validate_delivery_status_transition():
 #                 return FakeQuery([{"loyalty_points": self._points}])
 #             return FakeQuery()
 
-#     fake = FakeClient(100)
-#     # monkeypatch table methods to capture calls for insert
-#     orr.update_loyalty_points(fake, "u1", 50, order_id="o1")
-#     # After update, print statements executed; we assert no exceptions and optimistic behavior
-#     # There is no return value; ensure function completes
-#     assert True
+    fake = FakeClient(100)
+    # monkeypatch table methods to capture calls for insert
+    orr.update_loyalty_points(fake, "u1", 50, order_id="o1")
+    # After update, print statements executed; we assert no exceptions
+    # and optimistic behavior. There is no return value; ensure function
+    # completes
+    assert True

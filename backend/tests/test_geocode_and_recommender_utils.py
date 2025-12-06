@@ -100,7 +100,12 @@ def test_cluster_orders_basic():
 
 def test_cluster_orders_missing_coords():
     orders = [
-        {"order_id": "o1", "restaurants": {}, "latitude": None, "longitude": None},
+        {
+            "order_id": "o1",
+            "restaurants": {},
+            "latitude": None,
+            "longitude": None,
+        },
         {
             "order_id": "o2",
             "restaurants": {"latitude": "", "longitude": ""},
