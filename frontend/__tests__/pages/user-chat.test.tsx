@@ -78,11 +78,11 @@ describe('User Chat Page', () => {
       // Verify input field exists (send button should be next to it)
       const input = screen.getByRole('textbox');
       expect(input).toBeInTheDocument();
-      
+
       // Verify there are buttons on the page (one should be the send button)
       const buttons = screen.getAllByRole('button');
       expect(buttons.length).toBeGreaterThan(0);
-      
+
       // The send button should be an IconButton, check for buttons with SVG icons
       const iconButtons = buttons.filter(button => button.querySelector('svg'));
       expect(iconButtons.length).toBeGreaterThan(0);

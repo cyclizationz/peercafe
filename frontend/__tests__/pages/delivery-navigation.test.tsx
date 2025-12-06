@@ -67,7 +67,9 @@ describe('Delivery Navigation Page', () => {
         // Loading state should appear initially, then disappear
         const progressbar = screen.queryByRole('progressbar');
         // Either loading is shown or it has finished loading
-        expect(progressbar !== null || screen.getByText(/No active delivery found/i)).toBeTruthy();
+        expect(
+          progressbar !== null || screen.getByText(/No active delivery found/i)
+        ).toBeTruthy();
       },
       { timeout: 5000 }
     );
@@ -82,7 +84,9 @@ describe('Delivery Navigation Page', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText(/No active delivery found/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/No active delivery found/i)
+        ).toBeInTheDocument();
       },
       { timeout: 5000 }
     );
