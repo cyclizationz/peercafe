@@ -182,12 +182,13 @@ describe('Admin Recommendations Page', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText(/Bella Italia/i)).toBeInTheDocument();
         const jumpButton = screen.getByRole('link', {
           name: /Go to Bella Italia/i,
         });
         expect(jumpButton).toBeInTheDocument();
         expect(jumpButton).toHaveAttribute('href', '/admin/restaurants/1');
+        // Verify the button text contains the restaurant name
+        expect(jumpButton.textContent).toMatch(/Bella Italia/i);
       },
       { timeout: 3000 }
     );
