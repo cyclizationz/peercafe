@@ -149,13 +149,7 @@ jest.mock('@mui/material', () => ({
     );
   },
 }));
-/* eslint-enable @typescript-eslint/no-unused-vars */
 
-jest.mock('@mui/icons-material', () => ({
-  Navigation: () => <span>NavIcon</span>,
-  Restaurant: () => <span>RestaurantIcon</span>,
-  Home: () => <span>HomeIcon</span>,
-}));
 jest.mock('@mui/icons-material', () => ({
   Navigation: () => <span>NavIcon</span>,
   Restaurant: () => <span>RestaurantIcon</span>,
