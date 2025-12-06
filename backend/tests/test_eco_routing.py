@@ -109,6 +109,54 @@ def test_cluster_orders_string_coordinates_and_missing_customer():
     assert any(len(g) == 2 for g in groups)
 
 
+def test_cluster_orders_invalid_coordinates():
+    """Test handling of invalid coordinate values"""
+    # Test with invalid string coordinates that can't be parsed as float
+    o1 = {
+        "order_id": "1",
+        "restaurant_id": "r1",
+        "restaurants": {"latitude": "invalid", "longitude": "not-a-number"},
+        "latitude": 37.0,
+        "longitude": -122.0,
+    }
+    o2 = {
+        "order_id": "2",
+        "restaurant_id": "r2",
+        "restaurants": {"latitude": "37.0", "longitude": "-122.0"},
+        "latitude": 37.001,
+        "longitude": -122.001,
+    }
+    # Should handle invalid coordinates gracefully (return None, None)
+    groups = cluster_orders_by_proximity(
+        [o1, o2], rest_threshold_m=200, cust_threshold_m=100
+    )
+    # Should still produce groups (o1 becomes singleton due to invalid restaurant coords)
+    assert len(groups) >= 1
+
+
+def test_cluster_orders_empty_string_coordinates():
+    """Test handling of empty string coordinates"""
+    o1 = {
+        "order_id": "1",
+        "restaurant_id": "r1",
+        "restaurants": {"latitude": "", "longitude": ""},
+        "latitude": 37.0,
+        "longitude": -122.0,
+    }
+    o2 = {
+        "order_id": "2",
+        "restaurant_id": "r2",
+        "restaurants": {"latitude": "37.0", "longitude": "-122.0"},
+        "latitude": 37.001,
+        "longitude": -122.001,
+    }
+    groups = cluster_orders_by_proximity(
+        [o1, o2], rest_threshold_m=200, cust_threshold_m=100
+    )
+    # Empty strings should be treated as None
+    assert len(groups) >= 1
+
+
 def test_cluster_multiple_groups_and_threshold_behavior():
     # Create 4 orders forming two clusters
     a1 = make_order(40.0, -75.0, 40.001, -75.001, "a1")

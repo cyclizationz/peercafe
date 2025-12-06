@@ -3,7 +3,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
-import RecommendPage from '../../app/(main)/admin/recommendations/page';
+import RecommendPage from '../../app/(main)/user/recommendations/page';
 import { CartProvider } from '../../app/_contexts/CartContext';
 
 // Mock supabase client before importing the page component
@@ -36,7 +36,7 @@ afterAll(() => {
   HTMLAnchorElement.prototype.click = _origAnchorClick;
 });
 
-describe('Admin Recommendations Page', () => {
+describe('User Recommendations Page', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('shows validation error when query is empty', async () => {
@@ -47,7 +47,6 @@ describe('Admin Recommendations Page', () => {
     );
 
     const input = screen.getByRole('textbox');
-    // Trigger Ctrl+Enter which the component listens for to submit
     fireEvent.keyDown(input, { key: 'Enter', ctrlKey: true });
 
     await waitFor(() => {
@@ -73,7 +72,6 @@ describe('Admin Recommendations Page', () => {
             headers: { get: () => 'application/json' },
             json: async () => [
               { restaurant_id: 1, name: 'Test Restaurant' },
-              { restaurant_id: 2, name: 'Another Restaurant' },
             ],
           } as any);
         }
@@ -90,7 +88,6 @@ describe('Admin Recommendations Page', () => {
     await userEvent.type(input, 'pizza near me');
 
     const btn = screen.getByRole('button', { name: /Get Recommendation/i });
-    // Wait until the button becomes enabled (it is disabled when the query is empty)
     await waitFor(() => expect(btn).toBeEnabled());
     userEvent.click(btn);
 
@@ -111,7 +108,6 @@ describe('Admin Recommendations Page', () => {
             headers: { get: () => 'application/json' },
             json: async () => [
               { restaurant_id: 1, name: 'Bella Italia' },
-              { restaurant_id: 2, name: 'Taco Fiesta' },
             ],
           } as any);
         }
@@ -133,7 +129,7 @@ describe('Admin Recommendations Page', () => {
     fetchMock.mockRestore();
   });
 
-  it('shows quick jump button when restaurant is found in recommendation', async () => {
+  it('shows quick jump button linking to user restaurant page', async () => {
     const fetchMock = jest
       .spyOn(global, 'fetch')
       .mockImplementation((url: string | URL | Request) => {
@@ -152,7 +148,6 @@ describe('Admin Recommendations Page', () => {
             headers: { get: () => 'application/json' },
             json: async () => [
               { restaurant_id: 1, name: 'Bella Italia' },
-              { restaurant_id: 2, name: 'Taco Fiesta' },
             ],
           } as any);
         }
@@ -165,45 +160,45 @@ describe('Admin Recommendations Page', () => {
       </CartProvider>
     );
 
-    // Wait for restaurants to load
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:8000/api/restaurants'
-      );
-    });
-
     const input = screen.getByRole('textbox');
     await userEvent.type(input, 'italian food');
 
     const btn = screen.getByRole('button', { name: /Get Recommendation/i });
     await waitFor(() => expect(btn).toBeEnabled());
-    await userEvent.click(btn);
+    userEvent.click(btn);
 
-    await waitFor(
-      () => {
-        expect(screen.getByText(/Bella Italia/i)).toBeInTheDocument();
-        const jumpButton = screen.getByRole('link', {
-          name: /Go to Bella Italia/i,
-        });
-        expect(jumpButton).toBeInTheDocument();
-        expect(jumpButton).toHaveAttribute('href', '/admin/restaurants/1');
-      },
-      { timeout: 3000 }
-    );
+    await waitFor(() => {
+      const jumpButton = screen.getByRole('link', {
+        name: /Go to Bella Italia/i,
+      });
+      expect(jumpButton).toBeInTheDocument();
+      expect(jumpButton).toHaveAttribute('href', '/user/restaurants/1');
+    });
 
     fetchMock.mockRestore();
   });
 
-  it('handles restaurant loading error gracefully', async () => {
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
-
+  it('handles fuzzy restaurant name matching', async () => {
     const fetchMock = jest
       .spyOn(global, 'fetch')
       .mockImplementation((url: string | URL | Request) => {
+        if (typeof url === 'string' && url.includes('/recommendations')) {
+          return Promise.resolve({
+            ok: true,
+            headers: { get: () => 'application/json' },
+            json: async () => ({
+              recommendation: 'Try **Bella** for Italian cuisine.',
+            }),
+          } as any);
+        }
         if (typeof url === 'string' && url.includes('/restaurants')) {
-          return Promise.reject(new Error('Network error'));
+          return Promise.resolve({
+            ok: true,
+            headers: { get: () => 'application/json' },
+            json: async () => [
+              { restaurant_id: 1, name: 'Bella Italia Restaurant' },
+            ],
+          } as any);
         }
         return Promise.resolve({ ok: false } as any);
       });
@@ -214,12 +209,22 @@ describe('Admin Recommendations Page', () => {
       </CartProvider>
     );
 
-    // Should not crash, just log error
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, 'italian');
+
+    const btn = screen.getByRole('button', { name: /Get Recommendation/i });
+    await waitFor(() => expect(btn).toBeEnabled());
+    userEvent.click(btn);
+
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalled();
+      const jumpButton = screen.queryByRole('link', {
+        name: /Go to/i,
+      });
+      // Should find fuzzy match
+      expect(jumpButton).toBeInTheDocument();
     });
 
-    consoleErrorSpy.mockRestore();
     fetchMock.mockRestore();
   });
 });
+
