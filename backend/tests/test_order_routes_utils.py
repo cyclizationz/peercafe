@@ -157,9 +157,10 @@ def test_validate_delivery_status_transition():
 #                 return FakeQuery([{"loyalty_points": self._points}])
 #             return FakeQuery()
 
-#     fake = FakeClient(100)
-#     # monkeypatch table methods to capture calls for insert
-#     orr.update_loyalty_points(fake, "u1", 50, order_id="o1")
-#     # After update, print statements executed; we assert no exceptions and optimistic behavior
-#     # There is no return value; ensure function completes
-#     assert True
+    fake = FakeClient(100)
+    # monkeypatch table methods to capture calls for insert
+    orr.update_loyalty_points(fake, "u1", 50, order_id="o1")
+    # After update, print statements executed; we assert no exceptions
+    # and optimistic behavior. There is no return value; ensure function
+    # completes
+    assert True
