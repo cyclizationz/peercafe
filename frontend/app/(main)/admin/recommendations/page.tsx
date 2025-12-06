@@ -75,6 +75,7 @@ export default function RecommendPage() {
         }
       } catch (err) {
         // Best-effort preload only; surface issues in console without blocking recommendations
+        // eslint-disable-next-line no-console
         console.error('Failed to preload restaurants for AI quick link', err);
       } finally {
         if (isMounted) {
@@ -150,6 +151,7 @@ export default function RecommendPage() {
         } else {
           // If HTML or other format, show more helpful error
           const text = await res.text();
+          // eslint-disable-next-line no-console
           console.error('Non-JSON response:', text.substring(0, 200));
           throw new Error(
             `API endpoint returned ${res.status}. The endpoint might not exist or is returning HTML instead of JSON. Check your API route at /api/recommendations.`

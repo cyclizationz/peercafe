@@ -46,19 +46,18 @@ jest.mock('@/utils/supabase/client', () => ({
 }));
 
 // Mock Material-UI to avoid rendering issues
+/* eslint-disable @typescript-eslint/no-unused-vars */
 jest.mock('@mui/material', () => ({
-  Box: ({ children, sx, ref, ...props }: any) => {
+  Box: ({ children, sx: _sx, ref, ...props }: any) => {
     const cleanProps = { ...props };
-    delete cleanProps.sx;
     return (
       <div ref={ref} {...cleanProps}>
         {children}
       </div>
     );
   },
-  Card: ({ children, sx, ...props }: any) => {
+  Card: ({ children, sx: _sx, ...props }: any) => {
     const cleanProps = { ...props };
-    delete cleanProps.sx;
     return <div {...cleanProps}>{children}</div>;
   },
   CardContent: ({ children, ...props }: any) => (
@@ -66,46 +65,37 @@ jest.mock('@mui/material', () => ({
   ),
   Typography: ({
     children,
-    variant,
-    color,
-    fontWeight,
-    gutterBottom,
+    variant: _variant,
+    color: _color,
+    fontWeight: _fontWeight,
+    gutterBottom: _gutterBottom,
     ...props
   }: any) => {
     const cleanProps = { ...props };
-    delete cleanProps.variant;
-    delete cleanProps.color;
-    delete cleanProps.fontWeight;
-    delete cleanProps.gutterBottom;
     return <div {...cleanProps}>{children}</div>;
   },
   Button: ({
     children,
     onClick,
     disabled,
-    fullWidth,
-    variant,
-    color,
+    fullWidth: _fullWidth,
+    variant: _variant,
+    color: _color,
     ...props
   }: any) => {
     const cleanProps = { ...props };
-    delete cleanProps.fullWidth;
-    delete cleanProps.variant;
-    delete cleanProps.color;
     return (
       <button onClick={onClick} disabled={disabled} {...cleanProps}>
         {children}
       </button>
     );
   },
-  LinearProgress: ({ sx, ...props }: any) => {
+  LinearProgress: ({ sx: _sx, ...props }: any) => {
     const cleanProps = { ...props };
-    delete cleanProps.sx;
     return <div {...cleanProps}>Loading...</div>;
   },
-  List: ({ children, dense, ...props }: any) => {
+  List: ({ children, dense: _dense, ...props }: any) => {
     const cleanProps = { ...props };
-    delete cleanProps.dense;
     return <ul {...cleanProps}>{children}</ul>;
   },
   ListItem: ({ children, ...props }: any) => <li {...props}>{children}</li>,
@@ -115,7 +105,7 @@ jest.mock('@mui/material', () => ({
       {secondary && <span>{secondary}</span>}
     </div>
   ),
-  Dialog: ({ open, children, onClose }: any) =>
+  Dialog: ({ open, children, onClose: _onClose }: any) =>
     open ? (
       <div role="dialog" data-testid="delivery-dialog">
         {children}
@@ -134,13 +124,11 @@ jest.mock('@mui/material', () => ({
     onChange,
     value,
     label,
-    inputProps,
-    fullWidth,
+    inputProps: _inputProps,
+    fullWidth: _fullWidth,
     ...props
   }: any) => {
     const cleanProps = { ...props };
-    delete cleanProps.fullWidth;
-    delete cleanProps.inputProps;
     return (
       <input
         value={value}
@@ -151,7 +139,7 @@ jest.mock('@mui/material', () => ({
       />
     );
   },
-  Alert: ({ children, severity, sx }: any) => {
+  Alert: ({ children, severity, sx: _sx }: any) => {
     const cleanProps: any = {};
     if (severity) cleanProps['data-severity'] = severity;
     return (

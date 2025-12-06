@@ -77,6 +77,7 @@ if (typeof global.Request === 'undefined') {
 // Ensure a mockable global.fetch exists for tests
 if (typeof global.fetch === 'undefined') {
   // Use a jest mock so tests can spyOn/replace it
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   global.fetch = (..._args) => Promise.resolve(new global.Response(null));
 }
 

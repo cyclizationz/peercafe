@@ -1,13 +1,11 @@
 import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import axios from 'axios';
 
 import DeliveryNavigationPage from '../../app/(main)/user/delivery/navigation/page';
 
 // Mock axios
 jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 // Mock supabase client
 const mockGetUser = jest.fn();
@@ -24,7 +22,7 @@ jest.mock('@/utils/supabase/client', () => ({
 
 // Mock NavigationMap component
 jest.mock('../../app/(main)/user/delivery/NavigationMap', () => {
-  return function MockNavigationMap(props: any) {
+  return function MockNavigationMap() {
     return <div data-testid="navigation-map">Navigation Map</div>;
   };
 });
@@ -66,7 +64,6 @@ describe('Delivery Navigation Page', () => {
     });
   });
 
-  // eslint-disable-next-line jest/no-disabled-tests
   it.skip('renders loading state initially', async () => {
     mockFrom.mockReturnValue(createMockChain([], null));
 
@@ -87,7 +84,6 @@ describe('Delivery Navigation Page', () => {
     );
   });
 
-  // eslint-disable-next-line jest/no-disabled-tests
   it.skip('renders no active order message when no orders found', async () => {
     mockFrom.mockReturnValue(createMockChain([], null));
 
@@ -105,7 +101,6 @@ describe('Delivery Navigation Page', () => {
     );
   });
 
-  // eslint-disable-next-line jest/no-disabled-tests
   it.skip('renders active order when found', async () => {
     const mockOrder = {
       order_id: 'order-123',
@@ -132,7 +127,6 @@ describe('Delivery Navigation Page', () => {
     );
   });
 
-  // eslint-disable-next-line jest/no-disabled-tests
   it.skip('shows error when user is not authenticated', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: null },
@@ -155,7 +149,6 @@ describe('Delivery Navigation Page', () => {
     );
   });
 
-  // eslint-disable-next-line jest/no-disabled-tests
   it.skip('handles order status update', async () => {
     const mockOrder = {
       order_id: 'order-123',
