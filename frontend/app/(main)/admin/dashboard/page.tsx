@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '../../../_components/navbar';
 
 // Component that uses useSearchParams - needs to be wrapped in Suspense
@@ -61,6 +61,8 @@ function DebugInfo() {
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
+
   return (
     <>
       <Navbar />
@@ -123,7 +125,7 @@ export default function AdminDashboard() {
               cursor: 'pointer',
               transition: 'transform 0.2s, box-shadow 0.2s',
             }}
-            onClick={() => (window.location.href = '/admin/restaurants')}
+            onClick={() => router.push('/admin/restaurants')}
             onMouseEnter={e => {
               e.currentTarget.style.transform = 'translateY(-4px)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
@@ -154,7 +156,7 @@ export default function AdminDashboard() {
               cursor: 'pointer',
               transition: 'transform 0.2s, box-shadow 0.2s',
             }}
-            onClick={() => (window.location.href = '/admin/orders')}
+            onClick={() => router.push('/admin/orders')}
             onMouseEnter={e => {
               e.currentTarget.style.transform = 'translateY(-4px)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
@@ -187,7 +189,7 @@ export default function AdminDashboard() {
               cursor: 'pointer',
               transition: 'transform 0.2s, box-shadow 0.2s',
             }}
-            onClick={() => (window.location.href = '/admin/inventory')}
+            onClick={() => router.push('/admin/inventory')}
             onMouseEnter={e => {
               e.currentTarget.style.transform = 'translateY(-4px)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
@@ -241,7 +243,7 @@ export default function AdminDashboard() {
               cursor: 'pointer',
               transition: 'transform 0.2s, box-shadow 0.2s',
             }}
-            onClick={() => (window.location.href = '/admin/recommendations')}
+            onClick={() => router.push('/admin/recommendations')}
             onMouseEnter={e => {
               e.currentTarget.style.transform = 'translateY(-4px)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
@@ -272,7 +274,7 @@ export default function AdminDashboard() {
               cursor: 'pointer',
               transition: 'transform 0.2s, box-shadow 0.2s',
             }}
-            onClick={() => (window.location.href = '/admin/chat')}
+            onClick={() => router.push('/admin/chat')}
             onMouseEnter={e => {
               e.currentTarget.style.transform = 'translateY(-4px)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
