@@ -7,7 +7,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Button,
   TextField,
   Paper,
   Avatar,
@@ -24,7 +23,6 @@ import {
   RestartAlt as RestartIcon,
   Lightbulb as LightbulbIcon,
   Restaurant as RestaurantIcon,
-  Star as StarIcon,
   AttachMoney as MoneyIcon,
   EventAvailable as ReservationIcon,
   Deck as OutdoorIcon,
@@ -69,6 +67,7 @@ function parseRestaurantBuckets(content: string): {
       const data = JSON.parse(jsonStr);
       restaurants.push(data);
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error('Error parsing bucket:', e);
     }
   }
@@ -155,6 +154,7 @@ export default function ChatPage() {
           body: JSON.stringify({ session_id: sessionId }),
         });
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Error resetting chat:', err);
       }
     }

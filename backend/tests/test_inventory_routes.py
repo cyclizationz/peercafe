@@ -140,3 +140,73 @@ def test_inventory_status_filters_by_restaurant_id():
             call[0][0] == "restaurant_id" and call[0][1] == 1
             for call in mock_table.eq.call_args_list
         )
+
+
+def test_inventory_status_supabase_unavailable():
+    """Test when Supabase client is None"""
+    with (
+        patch("routes.inventory_routes.supabase", None),
+        patch("routes.inventory_routes.create_supabase_client", return_value=None),
+    ):
+        response = client.get("/api/ai/inventory/status")
+        assert response.status_code == 503
+        assert "not configured" in response.json()["detail"].lower()
+
+
+def test_inventory_status_exception_handling():
+    """Test exception handling in get_inventory_status"""
+    with (
+        patch("routes.inventory_routes.supabase", None),
+        patch(
+            "routes.inventory_routes.create_supabase_client",
+            side_effect=Exception("Database error"),
+        ),
+    ):
+        response = client.get("/api/ai/inventory/status")
+        assert response.status_code == 500
+
+
+def test_inventory_analysis_exception_handling(mock_supabase):
+    """Test exception handling in inventory_analysis"""
+    with patch(
+        "routes.inventory_routes._fetch_inventory_rows",
+        side_effect=Exception("Fetch error"),
+    ):
+        response = client.post("/api/ai/inventory/analysis", json={})
+        assert response.status_code == 500
+
+
+def test_inventory_refill_plan_exception_handling(mock_supabase):
+    """Test exception handling in inventory_refill_plan"""
+    with patch(
+        "routes.inventory_routes._fetch_inventory_rows",
+        side_effect=Exception("Fetch error"),
+    ):
+        response = client.post("/api/ai/inventory/refill-plan", json={})
+        assert response.status_code == 500
+
+
+def test_inventory_promo_suggestions_exception_handling(mock_supabase):
+    """Test exception handling in inventory_promo_suggestions"""
+    with patch(
+        "routes.inventory_routes._fetch_inventory_rows",
+        side_effect=Exception("Fetch error"),
+    ):
+        response = client.post("/api/ai/inventory/promo-suggestions", json={})
+        assert response.status_code == 500
+
+
+def test_get_supabase_client_creates_new():
+    """Test get_supabase_client creates new client when None"""
+    with (
+        patch("routes.inventory_routes.supabase", None),
+        patch("routes.inventory_routes.create_supabase_client") as mock_create,
+    ):
+        mock_client = MagicMock()
+        mock_create.return_value = mock_client
+
+        from routes.inventory_routes import get_supabase_client
+
+        client = get_supabase_client()
+        assert client == mock_client
+        mock_create.assert_called_once()

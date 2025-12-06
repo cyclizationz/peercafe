@@ -31,9 +31,12 @@ export default function LoyaltyPointsPage() {
 
   // Resolve current user ID from localStorage or backend `/api/auth/me`
   const [userId, setUserId] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = React.useState<any>(null);
-  const [authLoading, setAuthLoading] = useState<boolean>(false);
-  const [userLoading, setUserLoading] = useState<boolean>(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_currentUser, setCurrentUser] = React.useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_authLoading, setAuthLoading] = useState<boolean>(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_userLoading, _setUserLoading] = useState<boolean>(true);
 
   const getCurrentUser = async () => {
     try {
@@ -98,7 +101,7 @@ export default function LoyaltyPointsPage() {
 
   const fetchPointsHistory = async () => {
     try {
-      const response = await axios
+      await axios
         .get(`${backend_url}/${userId}/loyalty-points/history`)
         .then(response => {
           const data = response.data;

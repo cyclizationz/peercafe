@@ -23,6 +23,29 @@ import {
 import Navbar from '../../../_components/navbar';
 import MarkdownContent from '../../../_components/MarkdownContent';
 
+interface Restaurant {
+  restaurant_id: number;
+  name: string;
+}
+
+function extractFirstRestaurantName(markdown: string): string | null {
+  if (!markdown) return null;
+
+  // Prefer names that are formatted in bold markdown, e.g. **Restaurant Name**
+  const boldMatch = markdown.match(/\*\*(.+?)\*\*/);
+  if (boldMatch) {
+    return boldMatch[1].trim();
+  }
+
+  // Fallback: take the first numbered list item line as the name
+  const numberedLineMatch = markdown.match(/^\s*\d+\.\s+(.+)$/m);
+  if (numberedLineMatch) {
+    return numberedLineMatch[1].replace(/\*\*/g, '').trim();
+  }
+
+  return null;
+}
+
 // Temporary: hardcode the API base URL for testing
 const API_BASE = 'http://localhost:8000/api';
 
@@ -31,6 +54,72 @@ export default function RecommendPage() {
   const [loading, setLoading] = React.useState(false);
   const [result, setResult] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+
+  const [restaurants, setRestaurants] = React.useState<Restaurant[]>([]);
+  const [restaurantsLoaded, setRestaurantsLoaded] = React.useState(false);
+  const [recommendedRestaurant, setRecommendedRestaurant] =
+    React.useState<Restaurant | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const loadRestaurants = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/restaurants');
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        if (isMounted) {
+          setRestaurants(data);
+        }
+      } catch (err) {
+        // Best-effort preload only; surface issues in console without blocking recommendations
+        // eslint-disable-next-line no-console
+        console.error('Failed to preload restaurants for AI quick link', err);
+      } finally {
+        if (isMounted) {
+          setRestaurantsLoaded(true);
+        }
+      }
+    };
+
+    loadRestaurants();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!result || !restaurantsLoaded) {
+      setRecommendedRestaurant(null);
+      return;
+    }
+
+    const name = extractFirstRestaurantName(result);
+    if (!name) {
+      setRecommendedRestaurant(null);
+      return;
+    }
+
+    const lowerName = name.toLowerCase();
+
+    const exactMatch = restaurants.find(
+      r => r.name.toLowerCase() === lowerName
+    );
+    if (exactMatch) {
+      setRecommendedRestaurant(exactMatch);
+      return;
+    }
+
+    const fuzzyMatch = restaurants.find(r => {
+      const candidate = r.name.toLowerCase();
+      return candidate.includes(lowerName) || lowerName.includes(candidate);
+    });
+
+    setRecommendedRestaurant(fuzzyMatch || null);
+  }, [result, restaurants, restaurantsLoaded]);
 
   async function getRecommendation() {
     if (!query.trim()) {
@@ -62,6 +151,7 @@ export default function RecommendPage() {
         } else {
           // If HTML or other format, show more helpful error
           const text = await res.text();
+          // eslint-disable-next-line no-console
           console.error('Non-JSON response:', text.substring(0, 200));
           throw new Error(
             `API endpoint returned ${res.status}. The endpoint might not exist or is returning HTML instead of JSON. Check your API route at /api/recommendations.`
@@ -258,6 +348,24 @@ export default function RecommendPage() {
                   </Typography>
                 </Box>
                 <MarkdownContent content={result} />
+                {recommendedRestaurant && (
+                  <Box
+                    sx={{
+                      mt: 2,
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                    }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      href={`/admin/restaurants/${recommendedRestaurant.restaurant_id}`}
+                      startIcon={<RestaurantIcon />}
+                    >
+                      Go to {recommendedRestaurant.name}
+                    </Button>
+                  </Box>
+                )}
                 <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #e0e0e0' }}>
                   <Button
                     variant="outlined"

@@ -445,7 +445,7 @@ export default function DeliveryPage() {
       } else {
         setEcoOption(null);
       }
-    } catch (err) {
+    } catch {
       // ignore errors silently for now
       setEcoOption(null);
     }
