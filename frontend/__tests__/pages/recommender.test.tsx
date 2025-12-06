@@ -142,7 +142,8 @@ describe('Admin Recommendations Page', () => {
             ok: true,
             headers: { get: () => 'application/json' },
             json: async () => ({
-              recommendation: 'I recommend **Bella Italia** for great Italian food.',
+              recommendation:
+                'I recommend **Bella Italia** for great Italian food.',
             }),
           } as any);
         }

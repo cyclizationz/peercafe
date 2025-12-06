@@ -70,9 +70,7 @@ describe('User Recommendations Page', () => {
           return Promise.resolve({
             ok: true,
             headers: { get: () => 'application/json' },
-            json: async () => [
-              { restaurant_id: 1, name: 'Test Restaurant' },
-            ],
+            json: async () => [{ restaurant_id: 1, name: 'Test Restaurant' }],
           } as any);
         }
         return Promise.resolve({ ok: false } as any);
@@ -106,9 +104,7 @@ describe('User Recommendations Page', () => {
           return Promise.resolve({
             ok: true,
             headers: { get: () => 'application/json' },
-            json: async () => [
-              { restaurant_id: 1, name: 'Bella Italia' },
-            ],
+            json: async () => [{ restaurant_id: 1, name: 'Bella Italia' }],
           } as any);
         }
         return Promise.resolve({ ok: false } as any);
@@ -138,7 +134,8 @@ describe('User Recommendations Page', () => {
             ok: true,
             headers: { get: () => 'application/json' },
             json: async () => ({
-              recommendation: 'I recommend **Bella Italia** for great Italian food.',
+              recommendation:
+                'I recommend **Bella Italia** for great Italian food.',
             }),
           } as any);
         }
@@ -146,9 +143,7 @@ describe('User Recommendations Page', () => {
           return Promise.resolve({
             ok: true,
             headers: { get: () => 'application/json' },
-            json: async () => [
-              { restaurant_id: 1, name: 'Bella Italia' },
-            ],
+            json: async () => [{ restaurant_id: 1, name: 'Bella Italia' }],
           } as any);
         }
         return Promise.resolve({ ok: false } as any);
@@ -227,4 +222,3 @@ describe('User Recommendations Page', () => {
     fetchMock.mockRestore();
   });
 });
-

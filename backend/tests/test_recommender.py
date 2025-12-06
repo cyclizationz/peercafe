@@ -62,9 +62,7 @@ class TestRestaurantRecommenderInitialization:
     def test_init_with_openai(self, mock_env):
         """Test initialization with OpenAI"""
         with (
-            patch(
-                "utils.restaurant_recommender.create_supabase_client"
-            ) as mock_supabase,
+            patch("utils.restaurant_recommender.create_supabase_client"),
             patch("utils.restaurant_recommender.OpenAI") as mock_openai_cls,
             patch.dict(os.environ, {"OPENAI_API_KEY": "test-openai-key"}, clear=False),
         ):

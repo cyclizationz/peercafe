@@ -68,9 +68,7 @@ describe('Delivery Navigation Page', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/No active delivery found/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/No active delivery found/i)).toBeInTheDocument();
     });
   });
 
@@ -158,4 +156,3 @@ describe('Delivery Navigation Page', () => {
     expect(screen.getByTestId('navigation-map')).toBeInTheDocument();
   });
 });
-
