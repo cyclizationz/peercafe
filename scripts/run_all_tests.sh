@@ -58,8 +58,10 @@ run_section() {
 
 backend_pytest() {
   pushd "${script_dir}/../backend" >/dev/null || return 1
-  # Try local venv first, then pytest CLI, then python -m pytest fallbacks
-  if [ -x ".venv/bin/pytest" ]; then
+  # Try conda env backend first, then local venv, then pytest CLI, then python -m pytest fallbacks
+  if command -v conda >/dev/null 2>&1 && conda env list | grep -q "^backend "; then
+    conda run -n backend pytest --maxfail=5 -q --disable-warnings --cov=. --cov-report=term --cov-report=term-missing
+  elif [ -x ".venv/bin/pytest" ]; then
     .venv/bin/pytest --maxfail=1 -q --disable-warnings --cov=. --cov-report=term
   elif command -v pytest >/dev/null 2>&1; then
     pytest --maxfail=1 -q --disable-warnings --cov=. --cov-report=term
@@ -81,7 +83,9 @@ backend_pytest() {
   if [ -f .coverage ]; then
     echo
     echo "--- coverage report (backend) ---"
-    if [ -x ".venv/bin/coverage" ]; then
+    if command -v conda >/dev/null 2>&1 && conda env list | grep -q "^backend "; then
+      conda run -n backend coverage report -m
+    elif [ -x ".venv/bin/coverage" ]; then
       .venv/bin/coverage report -m
     elif command -v coverage >/dev/null 2>&1; then
       coverage report -m

@@ -1,10 +1,10 @@
-[![Frontend CI](https://github.com/Jawamegamind/PeerCafe/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Jawamegamind/PeerCafe/actions/workflows/frontend-ci.yml)
-[![Backend CI](https://github.com/Jawamegamind/PeerCafe/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Jawamegamind/PeerCafe/actions/workflows/backend-ci.yml)
-[![Code Quality](https://github.com/Jawamegamind/PeerCafe/actions/workflows/code-quality.yml/badge.svg)](https://github.com/Jawamegamind/PeerCafe/actions/workflows/code-quality.yml)
-[![codecov](https://codecov.io/github/Jawamegamind/PeerCafe/graph/badge.svg?token=C532V373J8)](https://codecov.io/github/Jawamegamind/PeerCafe)
-[![Frontend Coverage](https://codecov.io/github/Jawamegamind/PeerCafe/branch/main/graph/badge.svg?flag=frontend&token=C532V373J8)](https://codecov.io/github/Jawamegamind/PeerCafe/tree/main?flags%5B0%5D=frontend)
-[![Backend Coverage](https://codecov.io/github/Jawamegamind/PeerCafe/branch/main/graph/badge.svg?flag=backend&token=C532V373J8)](https://codecov.io/github/Jawamegamind/PeerCafe/tree/main?flags%5B0%5D=backend)
-[![Issues](https://img.shields.io/github/issues/Jawamegamind/PeerCafe)](https://github.com/Jawamegamind/PeerCafe/issues)
+[![Frontend CI](https://github.com/cyclizationz/peercafe/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/cyclizationz/peercafe/actions/workflows/frontend-ci.yml)
+[![Backend CI](https://github.com/cyclizationz/peercafe/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/cyclizationz/peercafe/actions/workflows/backend-ci.yml)
+[![Code Quality](https://github.com/cyclizationz/peercafe/actions/workflows/code-quality.yml/badge.svg)](https://github.com/cyclizationz/peercafe/actions/workflows/code-quality.yml)
+[![codecov](https://codecov.io/github/cyclizationz/peercafe/graph/badge.svg?token=C532V373J8)](https://codecov.io/github/cyclizationz/peercafe)
+[![Frontend Coverage](https://codecov.io/github/cyclizationz/peercafe/branch/main/graph/badge.svg?flag=frontend&token=C532V373J8)](https://codecov.io/github/cyclizationz/peercafe/tree/main?flags%5B0%5D=frontend)
+[![Backend Coverage](https://codecov.io/github/cyclizationz/peercafe/branch/main/graph/badge.svg?flag=backend&token=C532V373J8)](https://codecov.io/github/cyclizationz/peercafe/tree/main?flags%5B0%5D=backend)
+[![Issues](https://img.shields.io/github/issues/cyclizationz/peercafe)](https://github.com/cyclizationz/peercafe/issues)
 [![DOI](https://zenodo.org/badge/1069984936.svg)](https://doi.org/10.5281/zenodo.17420477)
 
 <!-- Frontend Code Quality Tool Badges -->
@@ -277,6 +277,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Mason Cormany] - [mcorman@ncsu.edu]
 - [Mulya Sandip Patel] - [mspate22@ncsu.edu]
 - [Himanshu Agarwal] - [hagarwa4@ncsu.edu]
+
+### Project3: Section2 Group1
+
+**Team Members:**
+| Name           | Phone        | Email              |
+|----------------|--------------|--------------------|
+| Robert Kemp    | 252-414-6551 | rckemp2@ncsu.edu   |
+| Matthew Nguyen | 919-267-0396 | mknguye2@ncsu.edu  |
+| Rishi Jeswani  | 984-480-7289 | rjeswan2@ncsu.edu  |
+| Tiehang Zhang  | 919-810-6663 | tzhang33@ncsu.edu  |
 
 ## 📞 Support
 

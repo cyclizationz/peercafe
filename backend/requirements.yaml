@@ -14,6 +14,9 @@ dependencies:
     - pytest
     - pytest-cov
     - pytest-asyncio
+    - python-dotenv
+    - openai
+    - groq >=0.4.0
     # Code quality tools
     - black>=23.0.0          # Code formatter
     - isort>=5.0.0           # Import sorter

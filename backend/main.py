@@ -2,8 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database.supabase_db import create_supabase_client
+from routes.ai_routes import ai_router
 from routes.auth_routes import auth_router
 from routes.delivery_routes import delivery_router
+from routes.inventory_routes import inventory_router
 from routes.menu_routes import menu_router
 from routes.order_routes import router as order_router
 from routes.restaurant_routes import restaurant_router
@@ -29,6 +31,8 @@ app.include_router(restaurant_router, prefix="/api")
 app.include_router(menu_router, prefix="/api")
 app.include_router(order_router, prefix="/api/orders")
 app.include_router(delivery_router, prefix="/api")
+app.include_router(ai_router, prefix="/api/ai")
+app.include_router(inventory_router, prefix="/api/ai")
 
 
 # Basic root endpoint

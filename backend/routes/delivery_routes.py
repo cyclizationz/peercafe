@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from database.supabase_db import create_supabase_client
 from models.delivery_model import Location
 from utils.geocode import geocode_address
+from utils.restaurant_recommender import cluster_orders_by_proximity
 
 delivery_router = APIRouter()
 supabase = create_supabase_client()
@@ -152,6 +153,100 @@ def _enrich_order_with_distance(order, distance_by_restaurant, duration_by_resta
         o_enriched["duration_to_restaurant_minutes"] = None
 
     return o_enriched
+
+
+@delivery_router.get("/deliveries/eco")
+async def deliveries_eco_option(
+    source: Location = Depends(location_from_query), max_group_size: int = Query(3)
+):
+    """Return an eco-friendly option: either a single closest order or a grouped set of orders
+    that are near each other to allow an efficient combined route.
+    This uses a simple proximity-based heuristic.
+    """
+    try:
+        # Reuse logic from fetch_ready_orders to get all ready orders and restaurant coords
+        result = (
+            supabase.from_("orders")
+            .select(
+                "order_id, user_id, restaurant_id, restaurants(name, latitude, longitude, address), customer:user_id(first_name, last_name), delivery_address , delivery_fee, tip_amount, estimated_pickup_time, estimated_delivery_time, latitude, longitude, status, distance_restaurant_delivery, duration_restaurant_delivery"
+            )
+            .eq("status", "ready")
+            .is_("delivery_user_id", None)
+            .execute()
+        )
+        orders = result.data or []
+
+        if not orders:
+            return {"type": "none", "orders": [], "message": "No ready orders"}
+
+        # Extract and prepare destinations and compute distances from driver
+        restaurant_ids, restaurant_coords_by_id = _extract_restaurant_coords(orders)
+        dests = _prepare_destinations(restaurant_ids, restaurant_coords_by_id)
+        src_lng, src_lat = float(source.longitude), float(source.latitude)
+
+        distance_by_restaurant, duration_by_restaurant = (
+            await _compute_distances_and_durations(src_lng, src_lat, dests)
+        )
+
+        enriched_orders = [
+            _enrich_order_with_distance(
+                o, distance_by_restaurant, duration_by_restaurant
+            )
+            for o in orders
+        ]
+
+        # Cluster orders by proximity (restaurants/customers)
+        groups = cluster_orders_by_proximity(enriched_orders)
+
+        # Keep only groups larger than 1 and within max_group_size
+        viable_groups = [g for g in groups if 1 < len(g) <= max_group_size]
+
+        # Choose best group by sum of distances from driver to each group's restaurant (lower is better)
+        best_group = None
+        best_group_score = None
+        for g in viable_groups:
+            # sum distances to distinct restaurant ids
+            rids = set(
+                o.get("restaurant_id") for o in g if o.get("restaurant_id") is not None
+            )
+            s = 0
+            for rid in rids:
+                d = distance_by_restaurant.get(rid)
+                s += d if d is not None else 0
+            if best_group_score is None or s < best_group_score:
+                best_group_score = s
+                best_group = g
+
+        if best_group:
+            return {
+                "type": "group",
+                "orders": [o.get("order_id") for o in best_group],
+                "group_size": len(best_group),
+                "reason": "Nearby restaurants/customers allow grouped pickup/delivery",
+            }
+
+        # Fallback: mark single closest order as eco option
+        sorted_orders = sorted(
+            (o for o in enriched_orders if o.get("distance_to_restaurant") is not None),
+            key=lambda x: x.get("distance_to_restaurant", float("inf")),
+        )
+
+        if not sorted_orders:
+            return {"type": "none", "orders": [], "message": "No mappable orders"}
+
+        closest = sorted_orders[0]
+        return {
+            "type": "single",
+            "orders": [closest.get("order_id")],
+            "distance_meters": closest.get("distance_to_restaurant"),
+            "reason": "Closest pickup from driver minimizes driving distance",
+        }
+
+    except Exception as e:
+        print(f"Error computing eco option: {e}")
+        raise HTTPException(
+            status_code=500, detail="Failed to compute eco-friendly option"
+        )
 
 
 @delivery_router.get("/deliveries/ready", response_model=list)
