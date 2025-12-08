@@ -97,7 +97,8 @@ export default function AdminInventoryPage() {
       const statusUrl = new URL(`${API_BASE}/ai/inventory/status`);
       if (restaurantId && restaurantId.trim()) {
         const idNum = Number(restaurantId.trim());
-        if (!Number.isNaN(idNum)) statusUrl.searchParams.set('restaurant_id', String(idNum));
+        if (!Number.isNaN(idNum))
+          statusUrl.searchParams.set('restaurant_id', String(idNum));
       }
       const res = await fetch(statusUrl.toString());
       if (!res.ok) throw new Error('Failed to fetch inventory status');
@@ -193,15 +194,15 @@ export default function AdminInventoryPage() {
               Inventory Management
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField
-                  label="Restaurant ID (optional)"
-                  size="small"
-                  variant="outlined"
-                  value={restaurantId}
-                  onChange={e => setRestaurantId(e.target.value)}
-                  inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
-                  sx={{ width: 220 }}
-                />
+              <TextField
+                label="Restaurant ID (optional)"
+                size="small"
+                variant="outlined"
+                value={restaurantId}
+                onChange={e => setRestaurantId(e.target.value)}
+                inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                sx={{ width: 220 }}
+              />
               <Button
                 variant="outlined"
                 onClick={fetchSnapshot}
