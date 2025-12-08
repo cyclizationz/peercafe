@@ -6,6 +6,7 @@ import {
   Container,
   Paper,
   Typography,
+  TextField,
   Breadcrumbs,
   Link,
   Divider,
@@ -74,6 +75,7 @@ export default function AdminInventoryPage() {
   const [refillLoading, setRefillLoading] = React.useState(false);
   const [promoLoading, setPromoLoading] = React.useState(false);
   const [analysisText, setAnalysisText] = React.useState<string | null>(null);
+  const [restaurantId, setRestaurantId] = React.useState<string>('');
   const [refillPlan, setRefillPlan] = React.useState<string | null>(null);
   const [promoSuggestions, setPromoSuggestions] = React.useState<string | null>(
     null
@@ -91,7 +93,13 @@ export default function AdminInventoryPage() {
   const fetchSnapshot = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/ai/inventory/status`);
+      // Allow optional restaurant_id query parameter when provided
+      const statusUrl = new URL(`${API_BASE}/ai/inventory/status`);
+      if (restaurantId && restaurantId.trim()) {
+        const idNum = Number(restaurantId.trim());
+        if (!Number.isNaN(idNum)) statusUrl.searchParams.set('restaurant_id', String(idNum));
+      }
+      const res = await fetch(statusUrl.toString());
       if (!res.ok) throw new Error('Failed to fetch inventory status');
       const data = (await res.json()) as InventorySnapshot;
       setSnapshot(data);
@@ -114,10 +122,16 @@ export default function AdminInventoryPage() {
   ) => {
     setLoadingFlag(true);
     try {
+      const bodyPayload: any = {};
+      if (restaurantId && restaurantId.trim()) {
+        const idNum = Number(restaurantId.trim());
+        if (!Number.isNaN(idNum)) bodyPayload.restaurant_id = idNum;
+      }
+
       const res = await fetch(`${API_BASE}/ai/${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify(bodyPayload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -179,6 +193,15 @@ export default function AdminInventoryPage() {
               Inventory Management
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  label="Restaurant ID (optional)"
+                  size="small"
+                  variant="outlined"
+                  value={restaurantId}
+                  onChange={e => setRestaurantId(e.target.value)}
+                  inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                  sx={{ width: 220 }}
+                />
               <Button
                 variant="outlined"
                 onClick={fetchSnapshot}

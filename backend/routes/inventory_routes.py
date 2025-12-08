@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Body
 
 from database.supabase_db import create_supabase_client
 from models.inventory_model import InventorySnapshot
@@ -62,13 +62,24 @@ async def get_inventory_status(restaurant_id: Optional[int] = None):
 
 
 @inventory_router.post("/inventory/analysis")
-async def inventory_analysis(restaurant_id: Optional[int] = None):
+async def inventory_analysis(restaurant_id: Optional[int] = None, payload: dict | None = Body(None)):
     """
     Use LLM to summarize inventory issues: low stock, overstock, and risks.
     """
     try:
+        # Allow `restaurant_id` to be provided either as a query parameter
+        # or in the JSON request body. Frontend sends JSON { restaurant_id }.
+        if restaurant_id is None and payload:
+            try:
+                restaurant_id = int(payload.get('restaurant_id')) if payload.get('restaurant_id') is not None else None
+            except Exception:
+                restaurant_id = None
+
+        print(f"Generating inventory analysis for restaurant_id={restaurant_id}")
         rows = _fetch_inventory_rows(restaurant_id)
+        print(f"Fetched {len(rows)} inventory rows from database.")
         items = build_inventory_items(rows)
+        print(f"Fetched {len(items)} inventory items for analysis.")
         snapshot = analyze_inventory(items)
 
         advisor = InventoryLLMAdvisor()
@@ -101,11 +112,17 @@ async def inventory_analysis(restaurant_id: Optional[int] = None):
 
 
 @inventory_router.post("/inventory/refill-plan")
-async def inventory_refill_plan(restaurant_id: Optional[int] = None):
+async def inventory_refill_plan(restaurant_id: Optional[int] = None, payload: dict | None = Body(None)):
     """
     Use LLM to generate a refill plan based on current inventory.
     """
     try:
+        if restaurant_id is None and payload:
+            try:
+                restaurant_id = int(payload.get('restaurant_id')) if payload.get('restaurant_id') is not None else None
+            except Exception:
+                restaurant_id = None
+
         rows = _fetch_inventory_rows(restaurant_id)
         items = build_inventory_items(rows)
         snapshot = analyze_inventory(items)
@@ -132,11 +149,17 @@ async def inventory_refill_plan(restaurant_id: Optional[int] = None):
 
 
 @inventory_router.post("/inventory/promo-suggestions")
-async def inventory_promo_suggestions(restaurant_id: Optional[int] = None):
+async def inventory_promo_suggestions(restaurant_id: Optional[int] = None, payload: dict | None = Body(None)):
     """
     Use LLM to suggest promotions for overstocked or stagnant items.
     """
     try:
+        if restaurant_id is None and payload:
+            try:
+                restaurant_id = int(payload.get('restaurant_id')) if payload.get('restaurant_id') is not None else None
+            except Exception:
+                restaurant_id = None
+
         rows = _fetch_inventory_rows(restaurant_id)
         items = build_inventory_items(rows)
         snapshot = analyze_inventory(items)
